@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"sync"
 
+	"gpioblink.com/x/karaoke-demon/handler"
 	"gpioblink.com/x/karaoke-demon/watcher"
 )
 
@@ -17,83 +18,11 @@ const VIDEO_SIZE = "512MiB"
 
 const FIFO_PATH = "/tmp/karaoke-fifo"
 
-var FILLER_VIDEOS_PATH = []string{} // 動画の用意が間に合わない際に利用される
-
 /*
 1. 赤外線により、カラオケマシンからの予約情報 → reservedSongsに追加
 2. reservedSongsの情報を元に楽曲ファイルがなければをダウンロード (現段階では未実装)
 3. FATに次に追加する曲としてキューイング →
 */
-
-/* カラオケマシンの予約状態管理 */
-type ReservedSong struct {
-	requestNo string
-	songName  string // 現段階では未使用
-}
-
-var reservedSongs = []ReservedSong{}
-
-/* FATファイルシステム内のスロット管理 */
-type SlotState int
-
-const (
-	_             SlotState = iota
-	SLOT_FREE               // 書き込み可能
-	SLOT_OCCUPIED           // 曲が入っている
-	SLOT_LOCKED             // 曲が再生中
-)
-
-var slotStates = []SlotState{}
-
-// -- 以下TODO
-
-/* 次に再生する曲の管理 */
-type VideoState int
-
-const (
-	_ VideoState = iota
-	VIDEO_REQUESTED
-	VIDEO_DOWNLOADED
-	VIDEO_INSTALLED
-	VIDEO_AVAILABLE
-)
-
-type KaraokeVideoNode struct {
-	VideoPath string
-}
-
-func main() {
-	// TODO: 各種初期化処理を適切なパッケージ内へ移動
-	setupImage()
-	setupFIFO()
-
-	msg := make(chan string, 1)
-
-	fifoWatcher, err := watcher.NewFIFOWatcher(FIFO_PATH, msg)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer fifoWatcher.Close()
-
-	// FIFOファイルを監視
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go printMsg(msg, &wg)
-
-	wg.Add(1)
-	go fifoWatcher.Start(&wg)
-
-	wg.Wait()
-}
-
-func printMsg(msg <-chan string, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		fmt.Println(<-msg)
-	}
-}
 
 func setupImage() {
 	// イメージファイルが存在する場合は削除
@@ -126,4 +55,32 @@ func setupFIFO() {
 func Exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func main() {
+	msg := make(chan string, 1)
+
+	// TODO: 各種初期化処理を適切なパッケージ内へ移動
+	setupImage()
+	setupFIFO()
+
+	fifoWatcher, err := watcher.NewFIFOWatcher(FIFO_PATH, msg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer fifoWatcher.Close()
+
+	karaokeHandler := handler.NewKaraokeHandler(msg)
+
+	// FIFO監視とハンドラを同時に起動
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go karaokeHandler.Start(&wg)
+
+	wg.Add(1)
+	go fifoWatcher.Start(&wg)
+
+	wg.Wait()
 }
