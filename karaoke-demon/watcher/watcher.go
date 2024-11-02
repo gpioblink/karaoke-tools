@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
@@ -36,46 +37,44 @@ func NewFIFOWatcher(fifoPath string, messageCh chan string) (*FIFOWatcher, error
 	return &FIFOWatcher{
 		watcher:   watcher,
 		fifo:      fifo,
-		messageCh: make(chan string),
+		messageCh: messageCh,
 	}, nil
 }
 
-func (fw *FIFOWatcher) StartWatchingFIFO() error {
-	go func() {
-		defer fw.watcher.Close()
-		for {
-			log.Printf("Waiting for events...")
-			select {
-			case event, ok := <-fw.watcher.Events:
-				if !ok {
-					return
-				}
-				log.Println("event:", event)
-				// 書き込みイベントが発生した場合にデータを読み取る
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					fw.readFIFOData(fw.fifo)
-				}
+func (fw *FIFOWatcher) Start(wg *sync.WaitGroup) {
+	defer wg.Done()
 
-			case err, ok := <-fw.watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Printf("Watcher error: %v", err)
+	for {
+		log.Printf("Waiting for events...")
+		select {
+		case event, ok := <-fw.watcher.Events:
+			if !ok {
+				return
 			}
-		}
-	}()
+			log.Println("event:", event)
+			// 書き込みイベントが発生した場合にデータを読み取る
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				fw.readFIFOData()
+			}
 
-	select {}
+		case err, ok := <-fw.watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Printf("Watcher error: %v", err)
+		}
+	}
 }
 
 func (fw *FIFOWatcher) Close() {
+	fmt.Println("Closing watcher...")
 	fw.watcher.Close()
 	fw.fifo.Close()
 	close(fw.messageCh)
 }
 
-func (fw *FIFOWatcher) readFIFOData(fifo *os.File) {
-	scanner := bufio.NewScanner(fifo)
+func (fw *FIFOWatcher) readFIFOData() {
+	scanner := bufio.NewScanner(fw.fifo)
 	for scanner.Scan() {
 		line := scanner.Text()
 		fw.messageCh <- line

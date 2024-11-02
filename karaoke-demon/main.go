@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
+	"sync"
 
 	"gpioblink.com/x/karaoke-demon/watcher"
 )
@@ -67,23 +67,32 @@ func main() {
 	setupImage()
 	setupFIFO()
 
-	msg := make(chan string)
+	msg := make(chan string, 1)
 
 	fifoWatcher, err := watcher.NewFIFOWatcher(FIFO_PATH, msg)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	// FIFOファイルを監視
-	if err := fifoWatcher.StartWatchingFIFO(); err != nil {
-		fmt.Println(err)
-		return
-	}
 	defer fifoWatcher.Close()
 
-	log.Println("end of the file")
+	// FIFOファイルを監視
+	var wg sync.WaitGroup
 
+	wg.Add(1)
+	go printMsg(msg, &wg)
+
+	wg.Add(1)
+	go fifoWatcher.Start(&wg)
+
+	wg.Wait()
+}
+
+func printMsg(msg <-chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		fmt.Println(<-msg)
+	}
 }
 
 func setupImage() {
