@@ -17,6 +17,8 @@ const VIDEO_NUM = "3"
 const VIDEO_SIZE = "512MiB"
 
 func setupImage(imagePath string, dummyFilePath string) {
+	fmt.Println("Setup image file...")
+
 	// イメージファイルが存在する場合は削除
 	if Exists(imagePath) {
 		os.Remove(imagePath)
@@ -30,6 +32,8 @@ func setupImage(imagePath string, dummyFilePath string) {
 		fmt.Println("Failed to create image file.")
 		return
 	}
+
+	fmt.Println("Insert initial video files...")
 
 	// ビデオ数の分だけダミーファイルを書き込み
 	for i := 0; i < 3; i++ {
@@ -86,9 +90,11 @@ func main() {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
+	fmt.Println("Start fifo watcher...")
 	go karaokeHandler.Start(&wg)
 
 	wg.Add(1)
+	fmt.Println("Start karaoke handler...")
 	go fifoWatcher.Start(&wg)
 
 	wg.Wait()
