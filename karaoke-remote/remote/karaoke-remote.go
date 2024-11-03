@@ -14,8 +14,13 @@ const (
 	DevicePath = "/dev/lirc1"
 
 	// NECフォーマットの赤外線コードを受信するためのモード
-	LIRC_MODE_SCANCODE = 0x00000004
-	LIRC_SET_REC_MODE  = 0x00000003
+	LIRC_GET_FEATURES  = 0x00000000
+	LIRC_GET_SEND_MODE = 0x00000001
+	LIRC_GET_REC_MODE  = 0x00000002
+
+	LIRC_SET_REC_MODE = 0x00000012
+
+	LIRC_MODE_SCANCODE = 0x00000008
 )
 
 type LircScancode struct {
@@ -24,26 +29,21 @@ type LircScancode struct {
 	Flags     uint32
 }
 
+func getLircStatus(file *os.File) {
+	v, err := unix.IoctlGetInt(int(file.Fd()), LIRC_GET_SEND_MODE)
+	if err != nil {
+		log.Fatalf("Failed to get LIRC send mode: %v", err)
+	}
+	fmt.Printf("LIRC send mode: %d\n", v)
+
+	v, err = unix.IoctlGetInt(int(file.Fd()), LIRC_GET_REC_MODE)
+	if err != nil {
+		log.Fatalf("Failed to get LIRC rec mode: %v", err)
+	}
+	fmt.Printf("LIRC rec mode: %d\n", v)
+}
+
 func ReceiveIRSignals(signalCh chan<- string) {
-	// lircSocket := "/var/run/lirc/lircd"
-
-	// file, err := os.Open(lircSocket)
-	// if err != nil {
-	// 	log.Fatalf("cannnot open a LIRC socket: %v", err)
-	// }
-	// defer file.Close()
-
-	// fmt.Println("waiting ir data...")
-
-	// scanner := bufio.NewScanner(file)
-	// for scanner.Scan() {
-	// 	signalCh <- scanner.Text()
-	// }
-
-	// if err := scanner.Err(); err != nil {
-	// 	log.Fatalf("LIRC read error: %v", err)
-	// }
-
 	// デバイスファイルを開く
 	file, err := os.OpenFile(DevicePath, os.O_RDWR, 0)
 	if err != nil {
@@ -51,10 +51,14 @@ func ReceiveIRSignals(signalCh chan<- string) {
 	}
 	defer file.Close()
 
+	getLircStatus(file)
+
 	// ioctlで受信モードをLIRC_MODE_SCANCODEに設定
 	if err := unix.IoctlSetInt(int(file.Fd()), LIRC_SET_REC_MODE, LIRC_MODE_SCANCODE); err != nil {
 		log.Fatalf("Failed to set LIRC mode to SCANCODE: %v", err)
 	}
+
+	getLircStatus(file)
 
 	fmt.Println("LIRC mode set to LIRC_MODE_SCANCODE. Waiting for NEC codes...")
 
