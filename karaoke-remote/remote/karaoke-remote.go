@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	// DevicePath           = "/dev/lirc1"
-	DevicePath           = "/home/gpioblink/mydata/dam-remote-lirc-dump/dam-random.raw"
+	DevicePath           = "/dev/lirc1"
 	LIRC_MODE2_SPACE     = uint32(0x00000000)
 	LIRC_MODE2_PULSE     = uint32(0x01000000)
 	LIRC_MODE2_FREQUENCY = uint32(0x02000000)
