@@ -9,7 +9,7 @@ import (
 
 const (
 	// DevicePath           = "/dev/lirc1"
-	DevicePath           = "/home/gpioblink/mydata/dam-remote-lirc-dump/dam-stop.raw"
+	DevicePath           = "/home/gpioblink/mydata/dam-remote-lirc-dump/dam-random.raw"
 	LIRC_MODE2_SPACE     = uint32(0x00000000)
 	LIRC_MODE2_PULSE     = uint32(0x01000000)
 	LIRC_MODE2_FREQUENCY = uint32(0x02000000)
@@ -18,6 +18,13 @@ const (
 
 	NEC_T = 562
 	EX    = 150
+
+	DAM_CUSTOMER_CODE      = 0xd1
+	DAM_CUSTOMER_CODE_INV  = 0x2d
+	DAM_START_SENDING_SONG = 0x08
+	DAM_STOP_SENDING_SONG  = 0x09
+	DAM_NUM                = 0x30
+	DAM_DASH               = 0x3c
 )
 
 type Frame struct {
@@ -38,7 +45,7 @@ func FindFrameLeader(file *os.File) error {
 
 		mode := scancode & 0xff000000
 		value := scancode & 0x00ffffff
-		fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
+		// fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
 
 		if mode != LIRC_MODE2_PULSE && !((NEC_T*16-EX) < value && value < (NEC_T*16+EX)) {
 			continue
@@ -51,7 +58,7 @@ func FindFrameLeader(file *os.File) error {
 
 		mode = scancode & 0xff000000
 		value = scancode & 0x00ffffff
-		fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
+		// fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
 
 		if mode != LIRC_MODE2_SPACE && !((NEC_T*8-EX) < value && value < (NEC_T*8+EX)) {
 			continue
@@ -82,8 +89,6 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 		mode1 := dataBitRaw[i*2+1] & 0xff000000
 		value1 := dataBitRaw[i*2+1] & 0x00ffffff
 
-		// fmt.Printf("mode0: 0x%x, value0: %d, mode1: 0x%x, value1: %d\n", mode0, value0, mode1, value1)
-
 		if mode0 != LIRC_MODE2_PULSE && !((NEC_T-EX) < value0 && value0 < (NEC_T+EX)) {
 			return nil, fmt.Errorf("invalid data bit")
 		}
@@ -100,14 +105,6 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 			return nil, fmt.Errorf("invalid data bit")
 		}
 	}
-	// 最後は繰り返しまちorストップビットなので飛ばす
-	// mode0 := dataBitRaw[62] & 0xff000000
-	// value0 := dataBitRaw[63] & 0x00ffffff
-	// mode1 := dataBitRaw[64] & 0xff000000
-	// value1 := dataBitRaw[65] & 0x00ffffff
-	// if mode0 != LIRC_MODE2_PULSE || mode1 != LIRC_MODE2_SPACE {
-	// 	return nil, fmt.Errorf("invalid stop bit")
-	// }
 
 	return &Frame{
 		customerCode:    decoded & 0xff,
@@ -125,6 +122,9 @@ func ReceiveIRSignals(signalCh chan<- string) {
 	}
 	defer file.Close()
 
+	var isSendingSong bool
+	var songNo string
+
 	// 受信ループ
 	for {
 		frame, err := ReceiveFrame(file)
@@ -134,10 +134,23 @@ func ReceiveIRSignals(signalCh chan<- string) {
 			continue
 		}
 
-		fmt.Printf("Received IR signal - CustomerCode: 0x%x, Data: 0x%x\n", frame.customerCode, frame.data)
+		// fmt.Printf("Received IR signal - CustomerCode: 0x%x, Data: 0x%x\n", frame.customerCode, frame.data)
 
-		// 受信したスキャンコードを表示（NECフォーマットの赤外線コード）
-		// fmt.Printf("Received NEC code - Scancode: 0x%x, Flags: 0x%x\n", scancode.Scancode, scancode.Flags)
-		// signalCh <- fmt.Sprintf("Received NEC code - Scancode: 0x%x, Flags: 0x%x\n", scancode.Scancode, scancode.Flags)
+		if frame.customerCode == 0xd1 && frame.customerCodeInv == 0x2d {
+			switch frame.data {
+			case DAM_START_SENDING_SONG:
+				isSendingSong = true
+				songNo = ""
+			case DAM_STOP_SENDING_SONG:
+				isSendingSong = false
+				signalCh <- fmt.Sprintf("REMOTE_SONG %s", songNo)
+			default:
+				if isSendingSong {
+					if DAM_NUM <= frame.data && frame.data <= DAM_NUM+9 {
+						songNo += fmt.Sprintf("%d", frame.data-DAM_NUM)
+					}
+				}
+			}
+		}
 	}
 }
