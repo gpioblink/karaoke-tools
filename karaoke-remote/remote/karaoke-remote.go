@@ -30,7 +30,13 @@ type LircScancode struct {
 }
 
 func getLircStatus(file *os.File) {
-	v, err := unix.IoctlGetInt(int(file.Fd()), LIRC_GET_SEND_MODE)
+	v, err := unix.IoctlGetInt(int(file.Fd()), LIRC_GET_FEATURES)
+	if err != nil {
+		log.Fatalf("Failed to get LIRC features: %v", err)
+	}
+	fmt.Printf("LIRC features: %d\n", v)
+
+	v, err = unix.IoctlGetInt(int(file.Fd()), LIRC_GET_SEND_MODE)
 	if err != nil {
 		log.Fatalf("Failed to get LIRC send mode: %v", err)
 	}
@@ -51,7 +57,7 @@ func ReceiveIRSignals(signalCh chan<- string) {
 	}
 	defer file.Close()
 
-	getLircStatus(file)
+	// getLircStatus(file)
 
 	// ioctlで受信モードをLIRC_MODE_SCANCODEに設定
 	if err := unix.IoctlSetInt(int(file.Fd()), LIRC_SET_REC_MODE, LIRC_MODE_SCANCODE); err != nil {
