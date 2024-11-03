@@ -45,13 +45,12 @@ func (fw *FIFOWatcher) Start(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for {
-		log.Printf("Waiting for events...")
 		select {
 		case event, ok := <-fw.watcher.Events:
 			if !ok {
 				return
 			}
-			log.Println("event:", event)
+			// log.Println("event:", event)
 			// 書き込みイベントが発生した場合にデータを読み取る
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				fw.readFIFOData()
