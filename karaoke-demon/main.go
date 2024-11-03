@@ -11,7 +11,7 @@ import (
 	"gpioblink.com/x/karaoke-demon/watcher"
 )
 
-const IMAGE_SIZE = "2GiB"
+const IMAGE_SIZE = "1.8GiB"
 const VIDEO_EXT = "mp4"
 const VIDEO_NUM = "3"
 const VIDEO_SIZE = "512MiB"
