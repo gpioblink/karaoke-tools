@@ -29,7 +29,15 @@ func NewConfig() (*Config, error) {
 
 	err := godotenv.Load(envFile)
 	if err != nil {
-		return nil, fmt.Errorf("error loading %s file", envFile)
+		// Using default values
+		fmt.Printf("Failed to load %s file. Using default values.\n", envFile)
+		return &Config{
+			IMAGE_PATH:         "/home/root/karaoke.img",
+			FIFO_PATH:          "/tmp/karaoke-fifo",
+			VIDEO_DIR:          "/home/output",
+			FILLER_VIDEOS_PATH: []string{"/home/output/dummy.mp4"},
+		}, nil
+		// return nil, fmt.Errorf("error loading %s file", envFile)
 	}
 
 	return &Config{
