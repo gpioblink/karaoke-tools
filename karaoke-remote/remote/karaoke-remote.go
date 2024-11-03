@@ -29,26 +29,6 @@ type LircScancode struct {
 	Flags     uint32
 }
 
-func getLircStatus(file *os.File) {
-	v, err := unix.IoctlSetInt(int(file.Fd()), LIRC_GET_FEATURES)
-	if err != nil {
-		log.Fatalf("Failed to get LIRC features: %v", err)
-	}
-	fmt.Printf("LIRC features: %d\n", v)
-
-	v, err = unix.IoctlGetInt(int(file.Fd()), LIRC_GET_SEND_MODE)
-	if err != nil {
-		log.Fatalf("Failed to get LIRC send mode: %v", err)
-	}
-	fmt.Printf("LIRC send mode: %d\n", v)
-
-	v, err = unix.IoctlGetInt(int(file.Fd()), LIRC_GET_REC_MODE)
-	if err != nil {
-		log.Fatalf("Failed to get LIRC rec mode: %v", err)
-	}
-	fmt.Printf("LIRC rec mode: %d\n", v)
-}
-
 func ReceiveIRSignals(signalCh chan<- string) {
 	// デバイスファイルを開く
 	file, err := os.OpenFile(DevicePath, os.O_RDWR, 0)
@@ -57,14 +37,10 @@ func ReceiveIRSignals(signalCh chan<- string) {
 	}
 	defer file.Close()
 
-	// getLircStatus(file)
-
 	// ioctlで受信モードをLIRC_MODE_SCANCODEに設定
 	if err := unix.IoctlSetPointerInt(int(file.Fd()), LIRC_SET_REC_MODE, LIRC_MODE_SCANCODE); err != nil {
 		log.Fatalf("Failed to set LIRC mode to SCANCODE: %v", err)
 	}
-
-	//getLircStatus(file)
 
 	fmt.Println("LIRC mode set to LIRC_MODE_SCANCODE. Waiting for NEC codes...")
 
