@@ -32,7 +32,7 @@ func NewKaraokeHandler(messageCh chan string, conf *config.Config) *KaraokeHandl
 func (kh *KaraokeHandler) printHandler() {
 	fmt.Println("<Current Status>")
 	fmt.Println("ReservedSongs: ", kh.reservedSongs)
-	fmt.Println("Slot: ", kh.slot)
+	fmt.Println("Slot: ", kh.slot.String())
 }
 
 func (kh *KaraokeHandler) handleSongAdded(songId string) {
@@ -54,6 +54,12 @@ imagePath test1.img, fileSize 2147483648, fileExt mp4, numOfFiles 3, eachFileSiz
 */
 func (kh *KaraokeHandler) handleMsgRead(addr uint64) {
 	fmt.Printf("[HandleMsgRead] addr: %d\n", addr)
+
+	// まだ1曲もスロットにない場合は何もしない
+	if kh.slot.IsAllSlotsFree() {
+		return
+	}
+
 	// TODO: ハードコードによる決め打ちをなくす
 	// アドレスを元にファイル番号を特定
 	fileIdx := -1
@@ -67,7 +73,7 @@ func (kh *KaraokeHandler) handleMsgRead(addr uint64) {
 		return
 	}
 
-	if fileIdx > 0 {
+	if fileIdx >= 0 {
 		// ファイル番号に関するスロットの状態を更新
 		currentIdx := fileIdx
 		lastIdx := ((fileIdx-1)%3 + 3) % 3
@@ -83,13 +89,15 @@ func (kh *KaraokeHandler) handleMsgRead(addr uint64) {
 	}
 
 	// 曲情報のアップデート要求
+
+	kh.printHandler()
 	kh.updateFAT()
 	kh.printHandler()
 }
 
 func (kh *KaraokeHandler) updateFAT() {
 	fmt.Println("[UpdateFAT]")
-	// 空きスロットを探す
+	// 次に書き込むべき空きスロットを探す
 	freeSlotNum, err := kh.slot.FindNextFreeSlot()
 	if err != nil {
 		return
@@ -131,18 +139,22 @@ func (kh *KaraokeHandler) Start(wg *sync.WaitGroup) {
 		command := res[0]
 		switch command {
 		case "REMOTE_SONG":
-			songId := res[1]
-			kh.handleSongAdded(songId)
-		case "USBMSG_READ":
-			addr, err := strconv.ParseUint(res[1], 10, 64)
-			if err != nil {
-				continue
+			if len(res) == 2 {
+				songId := res[1]
+				kh.handleSongAdded(songId)
 			}
-			// length, err := strconv.ParseUint(res[2], 10, 64)
-			// if err != nil {
-			// 	continue
-			// }
-			kh.handleMsgRead(addr)
+		case "USBMSG_READ":
+			if len(res) == 3 {
+				addr, err := strconv.ParseUint(res[1], 10, 64)
+				if err != nil {
+					continue
+				}
+				// length, err := strconv.ParseUint(res[2], 10, 64)
+				// if err != nil {
+				// 	continue
+				// }
+				kh.handleMsgRead(addr)
+			}
 		}
 	}
 }
