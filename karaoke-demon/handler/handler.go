@@ -8,16 +8,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"gpioblink.com/x/karaoke-demon/config"
 )
-
-const IMAGE_PATH = "/root/karaoke.img"
-const VIDEO_DIR = "/home/gpioblink/Downloads/mvideos/karaoke/output"
-
-var FILLER_VIDEOS_PATH = []string{"/dummy/path/filler-video"} // 動画の用意が間に合わない際に利用される
 
 /* カラオケマシンの予約状態管理 */
 type ReservedSong struct {
-	requestNo string
+	requestNo  string
+	isAttached bool
 }
 
 /* FATファイルシステム内のスロット管理 */
@@ -40,14 +38,16 @@ type KaraokeHandler struct {
 	slotStates    []SlotState
 	slotSongs     []SlotSong
 	messageCh     chan string
+	conf          *config.Config
 }
 
-func NewKaraokeHandler(messageCh chan string) *KaraokeHandler {
+func NewKaraokeHandler(messageCh chan string, conf *config.Config) *KaraokeHandler {
 	return &KaraokeHandler{
 		reservedSongs: []ReservedSong{},
 		slotSongs:     []SlotSong{{}, {}, {}},
 		slotStates:    []SlotState{SLOT_FREE, SLOT_FREE, SLOT_FREE},
 		messageCh:     messageCh,
+		conf:          conf,
 	}
 }
 
@@ -61,7 +61,7 @@ func (kh *KaraokeHandler) printHandler() {
 func (kh *KaraokeHandler) handleSongAdded(songId string) {
 	fmt.Printf("[HandleSongAdded] songId: %s\n", songId)
 	// キューに音楽を追加
-	kh.reservedSongs = append(kh.reservedSongs, ReservedSong{requestNo: songId})
+	kh.reservedSongs = append(kh.reservedSongs, ReservedSong{requestNo: songId, isAttached: false})
 	kh.printHandler()
 	kh.updateFAT()
 	kh.printHandler()
@@ -143,26 +143,27 @@ func (kh *KaraokeHandler) updateFAT() {
 	for i, slot := range kh.slotStates {
 		if slot == SLOT_FREE {
 			// 空きスロットに曲を追加
-			if len(kh.reservedSongs) > 0 {
-				song := kh.reservedSongs[0]
-				// 動画ディレクトリ内の選曲番号から始まるファイル名の曲を探す
-				filePath, err := findFileWithPrefix(VIDEO_DIR, song.requestNo)
-				if err != nil {
-					filePath = FILLER_VIDEOS_PATH[0]
+			for j, song := range kh.reservedSongs {
+				if !song.isAttached {
+					// 動画ディレクトリ内の選曲番号から始まるファイル名の曲を探す
+					filePath, err := findFileWithPrefix(kh.conf.VIDEO_DIR, song.requestNo)
+					if err != nil {
+						filePath = kh.conf.FILLER_VIDEOS_PATH[0]
+					}
+					// FATの書き換え
+					fmt.Println("Execute:", "makemyfat", "insert", kh.conf.IMAGE_PATH, filePath, strconv.Itoa(i))
+					if err := exec.Command("makemyfat", "insert",
+						kh.conf.IMAGE_PATH, filePath, strconv.Itoa(i)).Run(); err != nil {
+						// イメージファイルの追加に失敗した場合はエラーを出力
+						fmt.Printf("Failed to insert video %s to fileNo %d.\n", filePath, i)
+						return
+					}
+					// スロットの状態を更新
+					kh.slotStates[i] = SLOT_OCCUPIED
+					kh.slotSongs[i] = SlotSong{requestNo: song.requestNo, videoPath: filePath}
+					kh.reservedSongs[j].isAttached = true
 				}
-				// FATの書き換え
-				fmt.Println("Execute:", "makemyfat", "insert", IMAGE_PATH, filePath, strconv.Itoa(i))
-				if err := exec.Command("makemyfat", "insert",
-					IMAGE_PATH, filePath, strconv.Itoa(i)).Run(); err != nil {
-					// イメージファイルの追加に失敗した場合はエラーを出力
-					fmt.Printf("Failed to insert video %s to fileNo %d.", filePath, i)
-					return
-				}
-				// スロットの状態を更新
-				kh.slotStates[i] = SLOT_OCCUPIED
-				kh.slotSongs[i] = SlotSong{requestNo: song.requestNo, videoPath: filePath}
 			}
-			return
 		}
 	}
 }
