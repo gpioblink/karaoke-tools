@@ -10,42 +10,20 @@ import (
 	"sync"
 
 	"gpioblink.com/x/karaoke-demon/config"
+	"gpioblink.com/x/karaoke-demon/models"
 )
-
-/* カラオケマシンの予約状態管理 */
-type ReservedSong struct {
-	requestNo  string
-	isAttached bool
-}
-
-/* FATファイルシステム内のスロット管理 */
-type SlotState int
-
-const (
-	_             SlotState = iota
-	SLOT_FREE               // 書き込み可能
-	SLOT_OCCUPIED           // 曲が入っている
-	SLOT_LOCKED             // 曲が再生中
-)
-
-type SlotSong struct {
-	requestNo string
-	videoPath string
-}
 
 type KaraokeHandler struct {
-	reservedSongs []ReservedSong
-	slotStates    []SlotState
-	slotSongs     []SlotSong
+	reservedSongs models.ReservedSongs
+	slot          models.Slot
 	messageCh     chan string
 	conf          *config.Config
 }
 
 func NewKaraokeHandler(messageCh chan string, conf *config.Config) *KaraokeHandler {
 	return &KaraokeHandler{
-		reservedSongs: []ReservedSong{},
-		slotSongs:     []SlotSong{{}, {}, {}},
-		slotStates:    []SlotState{SLOT_FREE, SLOT_FREE, SLOT_FREE},
+		reservedSongs: models.NewReservedSongs(),
+		slot:          models.NewSlot(3), // TODO: とりあえず3スロットに決め打ち
 		messageCh:     messageCh,
 		conf:          conf,
 	}
@@ -54,14 +32,13 @@ func NewKaraokeHandler(messageCh chan string, conf *config.Config) *KaraokeHandl
 func (kh *KaraokeHandler) printHandler() {
 	fmt.Println("<Current Status>")
 	fmt.Println("ReservedSongs: ", kh.reservedSongs)
-	fmt.Println("SlotStates: ", kh.slotStates)
-	fmt.Println("SlotSongs: ", kh.slotSongs)
+	fmt.Println("Slot: ", kh.slot)
 }
 
 func (kh *KaraokeHandler) handleSongAdded(songId string) {
 	fmt.Printf("[HandleSongAdded] songId: %s\n", songId)
 	// キューに音楽を追加
-	kh.reservedSongs = append(kh.reservedSongs, ReservedSong{requestNo: songId, isAttached: false})
+	kh.reservedSongs.AddSong(songId)
 	kh.printHandler()
 	kh.updateFAT()
 	kh.printHandler()
@@ -77,8 +54,7 @@ imagePath test1.img, fileSize 2147483648, fileExt mp4, numOfFiles 3, eachFileSiz
 */
 func (kh *KaraokeHandler) handleMsgRead(addr uint64) {
 	fmt.Printf("[HandleMsgRead] addr: %d\n", addr)
-	// TODO: 決め打ちをなくす
-
+	// TODO: ハードコードによる決め打ちをなくす
 	// アドレスを元にファイル番号を特定
 	fileIdx := -1
 	if addr > 0x00002814 && addr < 0x00102814 {
@@ -91,81 +67,60 @@ func (kh *KaraokeHandler) handleMsgRead(addr uint64) {
 		return
 	}
 
-	// ファイル番号に関するスロットの状態を更新
-	if fileIdx >= 0 && fileIdx < len(kh.slotStates) {
-		// ファイル番号を元にスロットの状態を書き換え
-		kh.slotStates[fileIdx] = SLOT_LOCKED
-		// 現在再生中の前の曲を開放
-		lastFileIdx := ((fileIdx-1)%3 + 3) % 3
-		if kh.slotStates[lastFileIdx] == SLOT_LOCKED {
-			kh.removeSongBySongId(kh.slotSongs[lastFileIdx].requestNo)
-			kh.slotStates[lastFileIdx] = SLOT_FREE
+	if fileIdx > 0 {
+		// ファイル番号に関するスロットの状態を更新
+		currentIdx := fileIdx
+		lastIdx := ((fileIdx-1)%3 + 3) % 3
+
+		kh.slot.UpdateSlotState(currentIdx, models.SLOT_LOCKED)
+
+		// 現在が再生中の場合かつ、前の曲が再生終了している場合、前の曲は再生終了しているので解放処理
+		if kh.slot.GetSlotState(lastIdx) == models.SLOT_LOCKED {
+			lastSong := kh.slot.GetSlotSong(lastIdx)
+			kh.reservedSongs.RemoveSongBySeq(lastSong.GetSeq())
+			kh.slot.UpdateSlotState(lastIdx, models.SLOT_FREE)
 		}
 	}
 
 	// 曲情報のアップデート要求
-	kh.printHandler()
 	kh.updateFAT()
 	kh.printHandler()
-}
-
-func (kh *KaraokeHandler) removeSongBySongId(songId string) {
-	fmt.Printf("[RemoveSongBySongId] songId: %s\n", songId)
-	for i, song := range kh.reservedSongs {
-		if song.requestNo == songId {
-			kh.reservedSongs = append(kh.reservedSongs[:i], kh.reservedSongs[i+1:]...)
-			return
-		}
-	}
-}
-
-func findFileWithPrefix(dir string, prefix string) (string, error) {
-	fmt.Printf("[FindFileWithPrefix] dir: %s, prefix: %s\n", dir, prefix)
-	// ディレクトリ内のファイルを取得
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return "", err
-	}
-
-	// ファイル名がprefixから始まるファイルを探す
-	for _, entry := range files {
-		if strings.HasPrefix(entry.Name(), prefix) {
-			return filepath.Join(dir, entry.Name()), nil
-		}
-	}
-
-	return "", fmt.Errorf("file starting with %s is not found", prefix)
 }
 
 func (kh *KaraokeHandler) updateFAT() {
 	fmt.Println("[UpdateFAT]")
 	// 空きスロットを探す
-	for i, slot := range kh.slotStates {
-		if slot == SLOT_FREE {
-			// 空きスロットに曲を追加
-			for j, song := range kh.reservedSongs {
-				if !song.isAttached {
-					// 動画ディレクトリ内の選曲番号から始まるファイル名の曲を探す
-					filePath, err := findFileWithPrefix(kh.conf.VIDEO_DIR, song.requestNo)
-					if err != nil {
-						filePath = kh.conf.FILLER_VIDEOS_PATH[0]
-					}
-					// FATの書き換え
-					fmt.Println("Execute:", "makemyfat", "insert", kh.conf.IMAGE_PATH, filePath, strconv.Itoa(i))
-					if err := exec.Command("makemyfat", "insert",
-						kh.conf.IMAGE_PATH, filePath, strconv.Itoa(i)).Run(); err != nil {
-						// イメージファイルの追加に失敗した場合はエラーを出力
-						fmt.Printf("Failed to insert video %s to fileNo %d.\n", filePath, i)
-						return
-					}
-					// スロットの状態を更新
-					kh.slotStates[i] = SLOT_OCCUPIED
-					kh.slotSongs[i] = SlotSong{requestNo: song.requestNo, videoPath: filePath}
-					kh.reservedSongs[j].isAttached = true
-				}
-			}
-		}
+	freeSlotNum, err := kh.slot.FindNextFreeSlot()
+	if err != nil {
+		return
 	}
+
+	// 予約された曲の中から次に再生可能な曲を探す
+	song, err := kh.reservedSongs.FindNextAttachableSong()
+	if err != nil {
+		return
+	}
+
+	// 動画ディレクトリ内の選曲番号から始まるファイル名の曲を探す
+	filePath, err := findFileWithPrefix(kh.conf.VIDEO_DIR, song.GetRequestNo())
+	if err != nil {
+		filePath = kh.conf.FILLER_VIDEOS_PATH[0]
+	}
+
+	// FATの書き換え
+	fmt.Println("Execute:", "makemyfat", "insert", kh.conf.IMAGE_PATH, filePath, fmt.Sprintf("%d", freeSlotNum))
+	if err := exec.Command("makemyfat", "insert",
+		kh.conf.IMAGE_PATH, filePath, fmt.Sprintf("%d", freeSlotNum)).Run(); err != nil {
+		// イメージファイルの追加に失敗した場合はエラーを出力
+		fmt.Printf("Failed to insert video %s to fileNo %d.\n", filePath, freeSlotNum)
+		return
+	}
+
+	// スロットの状態を更新
+	kh.slot.UpdateSlotState(freeSlotNum, models.SLOT_OCCUPIED)
+	kh.slot.UpdateSlotSong(freeSlotNum, models.NewSlotSong(song.GetRequestNo(), filePath, song.GetSeq()))
+
+	kh.reservedSongs.AttachBySeq(song.GetSeq())
 }
 
 func (kh *KaraokeHandler) Start(wg *sync.WaitGroup) {
@@ -190,4 +145,22 @@ func (kh *KaraokeHandler) Start(wg *sync.WaitGroup) {
 			kh.handleMsgRead(addr)
 		}
 	}
+}
+
+func findFileWithPrefix(dir string, prefix string) (string, error) {
+	fmt.Printf("[FindFileWithPrefix] dir: %s, prefix: %s\n", dir, prefix)
+	// ディレクトリ内のファイルを取得
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+
+	// ファイル名がprefixから始まるファイルを探す
+	for _, entry := range files {
+		if strings.HasPrefix(entry.Name(), prefix) {
+			return filepath.Join(dir, entry.Name()), nil
+		}
+	}
+
+	return "", fmt.Errorf("file starting with %s is not found", prefix)
 }
