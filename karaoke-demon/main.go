@@ -75,7 +75,7 @@ func main() {
 
 	// TODO: 各種初期化処理を適切なパッケージ内へ移動
 	setupImage(conf.IMAGE_PATH, conf.FILLER_VIDEOS_PATH[0])
-	setupFIFO(conf.FIFO_PATH)
+	// setupFIFO(conf.FIFO_PATH)
 
 	fifoWatcher, err := watcher.NewFIFOWatcher(conf.FIFO_PATH, msg)
 	if err != nil {
