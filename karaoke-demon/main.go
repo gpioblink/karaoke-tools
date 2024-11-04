@@ -46,18 +46,6 @@ func setupImage(imagePath string, dummyFilePath string) {
 	}
 }
 
-func setupFIFO(fifoPath string) {
-	// FIFOファイルが存在する場合は削除し再作成
-	if Exists(fifoPath) {
-		os.Remove(fifoPath)
-	}
-
-	if err := exec.Command("mkfifo", fifoPath).Run(); err != nil {
-		fmt.Println("Failed to create fifo file.")
-		return
-	}
-}
-
 func Exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
