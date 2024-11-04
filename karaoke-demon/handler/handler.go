@@ -63,11 +63,11 @@ func (kh *KaraokeHandler) handleMsgRead(addr uint64) {
 	// TODO: ハードコードによる決め打ちをなくす
 	// アドレスを元にファイル番号を特定
 	fileIdx := -1
-	if addr > 0x00002814 && addr < 0x00102814 {
+	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 {
 		fileIdx = 0
-	} else if addr < 0x00202814 {
+	} else if addr < 0x0000000040502800 {
 		fileIdx = 1
-	} else if addr < 0x00302814 {
+	} else if addr < 0x0000000060502800 {
 		fileIdx = 2
 	} else {
 		return
