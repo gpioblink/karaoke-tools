@@ -11,12 +11,14 @@ var (
 	ErrReservationSongEmpty = errors.New("empty reservation song")
 )
 
+type SeqNum int
+
 type Reservation struct {
-	seq  int
+	seq  SeqNum
 	song song.Song
 }
 
-func (r *Reservation) Seq() int {
+func (r *Reservation) Seq() SeqNum {
 	return r.seq
 }
 
@@ -24,7 +26,7 @@ func (r *Reservation) Song() song.Song {
 	return r.song
 }
 
-func NewReservation(seq int, song *song.Song) (*Reservation, error) {
+func NewReservation(seq SeqNum, song *song.Song) (*Reservation, error) {
 	if seq == 0 {
 		return nil, ErrReservationSeqEmpty
 	}

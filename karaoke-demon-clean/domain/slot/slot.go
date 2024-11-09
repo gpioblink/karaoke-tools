@@ -8,6 +8,7 @@ var (
 	ErrorInvalidState = errors.New("invalid slot state")
 )
 
+type SlotNum int
 type State string
 
 const (
@@ -17,19 +18,19 @@ const (
 )
 
 type Slot struct {
-	id    int
-	state string
+	id    SlotNum
+	state State
 }
 
 func (s *Slot) Id() int {
-	return s.id
+	return int(s.id)
 }
 
-func (s *Slot) State() string {
+func (s *Slot) State() State {
 	return s.state
 }
 
-func NewSlot(id int, state State) (*Slot, error) {
+func NewSlot(id int, state string) (*Slot, error) {
 	if id == 0 {
 		return nil, ErrSlotIdEmpty
 	}
@@ -37,10 +38,10 @@ func NewSlot(id int, state State) (*Slot, error) {
 		return nil, ErrSlotStateEmpty
 	}
 	// stateが宣言されている定数のいずれかであることを確認
-	switch state {
+	switch State(state) {
 	case Empty, Reading, Locked:
 	default:
 		return nil, ErrorInvalidState
 	}
-	return &Slot{id: id, state: string(state)}, nil
+	return &Slot{id: SlotNum(id), state: State(state)}, nil
 }

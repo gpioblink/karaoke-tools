@@ -2,13 +2,15 @@ package song
 
 import "errors"
 
+type RequestNo string
+
 type Song struct {
-	requestNo string // 例 "552501"
+	requestNo RequestNo // 例 "552501"
 }
 
 var ErrRequestNoEmpty = errors.New("empty requestNo")
 
-func (s *Song) RequestNo() string {
+func (s *Song) RequestNo() RequestNo {
 	return s.requestNo
 }
 
@@ -16,5 +18,5 @@ func NewSongInfo(requestNo string) (*Song, error) {
 	if requestNo == "" {
 		return nil, ErrRequestNoEmpty
 	}
-	return &Song{requestNo: requestNo}, nil
+	return &Song{requestNo: RequestNo(requestNo)}, nil
 }
