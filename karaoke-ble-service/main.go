@@ -35,13 +35,14 @@ func main() {
 			{
 				Handle: &karaokeCharacteristic,
 				UUID:   characteristicUUID,
-				Value:  []byte("Hello, Bluetooth for Karaoke USB!"),
-				Flags:  bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission | bluetooth.CharacteristicWriteWithoutResponsePermission,
+				Flags:  bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission | bluetooth.CharacteristicNotifyPermission,
 				WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
-					// if offset != 0 || len(value) != 4 {
-					// 	return
-					// }
 					fmt.Printf("Received(%d): %s\n", offset, string(value))
+
+					// aからzまでの文字列を生成し、１行ずつ送信
+					txData := []byte("Notification: Data received")
+					_, err := karaokeCharacteristic.Write(txData)
+					must("send notification", err)
 				},
 			},
 		},
