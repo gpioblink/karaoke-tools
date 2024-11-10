@@ -67,19 +67,21 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	if err != nil {
 		return err
 	}
-	if prevSlot.Reservation() != nil {
-		err := s.reservationRepo.RemoveBySeq(int(prevSlot.Reservation().Seq()))
+	if prevSlot.State() != slot.Waiting {
+		if prevSlot.Reservation() != nil {
+			err := s.reservationRepo.RemoveBySeq(int(prevSlot.Reservation().Seq()))
+			if err != nil {
+				return err
+			}
+			err = s.slotRepo.DettachReservationAndVideoById(calcPositiveModulo(id-1, s.slotRepo.Len()))
+			if err != nil {
+				return err
+			}
+		}
+		err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
 		if err != nil {
 			return err
 		}
-		err = s.slotRepo.DettachReservationAndVideoById(calcPositiveModulo(id-1, s.slotRepo.Len()))
-		if err != nil {
-			return err
-		}
-	}
-	err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
-	if err != nil {
-		return err
 	}
 
 	// Make current slot state reading
@@ -145,6 +147,9 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 		nextReservation = r
 		break
 	}
+	if nextReservation == nil {
+		return nil
+	}
 
 	// Find Correct Video for the next reservation
 	currentSong, err := nextReservation.Song()
@@ -158,6 +163,12 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 
 	// Attach next reservation to the slot
 	err = s.slotRepo.AttachReservationAndVideoById(availableSlot.Id(), nextReservation, video)
+	if err != nil {
+		return err
+	}
+
+	// Set the slot state to waiting
+	err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)
 	if err != nil {
 		return err
 	}
