@@ -31,7 +31,7 @@ func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repos
 	}
 }
 
-func (s *MusicService) AddReservation(requestNo song.RequestNo) error {
+func (s *MusicService) ReserveSong(requestNo song.RequestNo) error {
 	err := s.reservationRepo.EnQueue(string(requestNo))
 	if err != nil {
 		return err
