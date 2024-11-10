@@ -52,7 +52,8 @@ func Exists(path string) bool {
 }
 
 func main() {
-	msg := make(chan string, 1)
+	fifoCh := make(chan string, 1)
+	bleCh := make(chan string, 1)
 
 	// FIXME: この値をそのままexec.Commandに渡しているのを修正したい
 	conf, err := config.NewConfig()
@@ -65,14 +66,14 @@ func main() {
 	setupImage(conf.IMAGE_PATH, conf.FILLER_VIDEOS_PATH[0])
 	// setupFIFO(conf.FIFO_PATH)
 
-	fifoWatcher, err := watcher.NewFIFOWatcher(conf.FIFO_PATH, msg)
+	fifoWatcher, err := watcher.NewFIFOWatcher(conf.FIFO_PATH, fifoCh)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer fifoWatcher.Close()
 
-	karaokeHandler := handler.NewKaraokeHandler(msg, conf)
+	karaokeHandler := handler.NewKaraokeHandler(fifoCh, conf)
 
 	// FIFO監視とハンドラを同時に起動
 	var wg sync.WaitGroup
