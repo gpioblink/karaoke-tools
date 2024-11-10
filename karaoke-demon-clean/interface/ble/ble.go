@@ -1,4 +1,4 @@
-package bluetooth
+package ble
 
 import (
 	"context"
@@ -32,7 +32,7 @@ var DefaultRouter = map[string]handler.HandlerFuncWithResponse{
 	"SLOTS":        handler.ListSlots,
 }
 
-func NewBluetoothInterface(service application.MusicService, router map[string]handler.HandlerFuncWithResponse) *BluetoothInterface {
+func NewBluetoothInterface(service *application.MusicService, router map[string]handler.HandlerFuncWithResponse) *BluetoothInterface {
 	adapter := bluetooth.DefaultAdapter
 	serviceUUID := bluetooth.NewUUID([16]byte{0x83, 0x71, 0xc4, 0x6d, 0x97, 0x96, 0x4a, 0x80, 0x94, 0x11, 0xcc, 0x73, 0x8d, 0xcd, 0xb5, 0xee})
 	rxUUID := bluetooth.CharacteristicUUIDUARTRX
@@ -54,7 +54,7 @@ func NewBluetoothInterface(service application.MusicService, router map[string]h
 		serviceUUID:   serviceUUID,
 		rxUUID:        rxUUID,
 		txUUID:        txUUID,
-		musicService:  service,
+		musicService:  *service,
 		receiveBuffer: make([]byte, 0),      // Initialize receive buffer
 		doLock:        make(chan string, 1), // Initialize channel with buffer size 1
 	}

@@ -27,7 +27,7 @@ var DefaultRouter = map[string]handler.HandlerFunc{
 	"USBMSG_READ": handler.UpdateReading,
 }
 
-func NewFifoInterface(service application.MusicService, router map[string]handler.HandlerFunc, fifoPath string) (*FifoInterface, error) {
+func NewFifoInterface(service *application.MusicService, router map[string]handler.HandlerFunc, fifoPath string) (*FifoInterface, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create watcher: %w", err)
@@ -48,7 +48,7 @@ func NewFifoInterface(service application.MusicService, router map[string]handle
 		router:       DefaultRouter,
 		watcher:      watcher,
 		fifoFile:     fifo,
-		musicService: service,
+		musicService: *service,
 		doChan:       make(chan string),
 	}
 

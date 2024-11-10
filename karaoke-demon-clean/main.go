@@ -1,0 +1,37 @@
+package main
+
+import (
+	"log"
+
+	"gpioblink.com/x/karaoke-demon-clean/application"
+	"gpioblink.com/x/karaoke-demon-clean/infrastructure/reservation"
+	"gpioblink.com/x/karaoke-demon-clean/infrastructure/slot"
+	"gpioblink.com/x/karaoke-demon-clean/infrastructure/song"
+	"gpioblink.com/x/karaoke-demon-clean/infrastructure/video"
+	"gpioblink.com/x/karaoke-demon-clean/interface/ble"
+	"gpioblink.com/x/karaoke-demon-clean/interface/fifo"
+)
+
+func main() {
+	log.Println("Starting Karaoke Demon...")
+	defer log.Println("Karaoke Demon stopped.")
+
+	songRepository := song.NewMemoryRepository()
+	videoRepository := video.NewStorageRepository("/home/gpioblink/Downloads/mvideos/karaoke/output")
+	reservationRepository := reservation.NewMemoryRepository(songRepository)
+	slotRepository := slot.NewMemoryRepository()
+
+	musicService := application.NewMusicService(reservationRepository, slotRepository, videoRepository)
+
+	fifoInterface, err := fifo.NewFifoInterface(musicService, fifo.DefaultRouter, "/tmp/karaoke-demon.fifo")
+	if err != nil {
+		log.Fatalf("failed to create fifo interface: %v", err)
+		panic(err)
+	}
+
+	fifoInterface.Run()
+
+	bleInterface := ble.NewBluetoothInterface(musicService, ble.DefaultRouter)
+
+	bleInterface.Run()
+}
