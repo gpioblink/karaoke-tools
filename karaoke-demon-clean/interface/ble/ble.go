@@ -83,7 +83,7 @@ func (b *BluetoothInterface) Run() {
 					b.bufferLock.Unlock()
 
 					// Check if we've received a full command (e.g., ending with a newline)
-					if strings.HasSuffix(string(b.receiveBuffer), "EOF") {
+					if strings.HasSuffix(string(b.receiveBuffer), "\n") {
 						log.Printf("Received full message: %s", b.receiveBuffer)
 						b.bufferLock.Lock()
 						fullMessage := string(b.receiveBuffer[:len(b.receiveBuffer)-3]) // Remove "EOF" from the end
