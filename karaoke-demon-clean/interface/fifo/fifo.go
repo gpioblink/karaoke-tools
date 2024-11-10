@@ -11,7 +11,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"gpioblink.com/x/karaoke-demon-clean/application"
-	"gpioblink.com/x/karaoke-demon-clean/interface/fifo/handler"
+	"gpioblink.com/x/karaoke-demon-clean/interface/handler"
 )
 
 type FifoInterface struct {
