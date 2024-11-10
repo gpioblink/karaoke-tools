@@ -17,7 +17,7 @@ func main() {
 	defer log.Println("Karaoke Demon stopped.")
 
 	songRepository := song.NewMemoryRepository()
-	videoRepository := video.NewStorageRepository("/home/gpioblink/Downloads/mvideos/karaoke/output")
+	videoRepository := video.NewStorageRepository("/home/gpioblink/Downloads/mvideos/karaoke/output", "/home/gpioblink/Downloads/mvideos/karaoke/output/dummy.mp4")
 	reservationRepository := reservation.NewMemoryRepository(songRepository)
 	slotRepository := slot.NewMemoryRepository()
 

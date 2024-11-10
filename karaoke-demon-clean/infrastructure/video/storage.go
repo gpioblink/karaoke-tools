@@ -15,9 +15,10 @@ type StorageRepository struct {
 	fillerVideoPath string
 }
 
-func NewStorageRepository(basePath string) *StorageRepository {
+func NewStorageRepository(basePath string, fillerVideoPath string) *StorageRepository {
 	return &StorageRepository{
-		basePath: basePath,
+		basePath:        basePath,
+		fillerVideoPath: fillerVideoPath,
 	}
 }
 
@@ -29,18 +30,16 @@ func (s *StorageRepository) FindByRequestNo(requestNo string) (*video.Video, err
 	}
 	// 動画ディレクトリ内の選曲番号から始まるファイル名の曲を探す
 	filePath, err := findFileWithPrefix(s.basePath, requestNo)
+
 	if err != nil {
-		v, videoErr := video.NewVideo(songInfo, s.fillerVideoPath)
-		if videoErr != nil {
-			return nil, videoErr
-		}
-		return v, err
+		filePath = s.fillerVideoPath
 	}
+
 	v, videoErr := video.NewVideo(songInfo, filePath)
 	if videoErr != nil {
 		return nil, videoErr
 	}
-	return v, nil
+	return v, nil // TODO: ビデオが存在しない場合の返し方を検討
 }
 
 func findFileWithPrefix(dir string, prefix string) (string, error) {
