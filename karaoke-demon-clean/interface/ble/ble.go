@@ -86,7 +86,7 @@ func (b *BluetoothInterface) Run() {
 					if strings.HasSuffix(string(b.receiveBuffer), "\n") {
 						log.Printf("Received full message: %s", b.receiveBuffer)
 						b.bufferLock.Lock()
-						fullMessage := string(b.receiveBuffer[:len(b.receiveBuffer)-3]) // Remove "EOF" from the end
+						fullMessage := string(b.receiveBuffer[:len(b.receiveBuffer)-1]) // Remove EOF from the end
 						b.receiveBuffer = b.receiveBuffer[:0]                           // Clear buffer after processing
 						b.bufferLock.Unlock()
 
@@ -128,6 +128,7 @@ func (b *BluetoothInterface) Do(ctx context.Context, line string) {
 
 	if handlerFunc, ok := b.router[action]; ok {
 		res := []byte(handlerFunc(ctx, b.musicService, *handler.NewRequest(action, cmd[1:])))
+		res = append(res, 0x0) // Add EOF to the end of the response
 
 		// Send response to the client
 		if len(res) > 0 {
