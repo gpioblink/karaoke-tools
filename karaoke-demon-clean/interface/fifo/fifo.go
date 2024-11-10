@@ -19,6 +19,7 @@ type FifoInterface struct {
 	watcher      *fsnotify.Watcher
 	fifoFile     *os.File
 	musicService application.MusicService
+	doChan       chan string
 }
 
 func NewFifoInterface(service application.MusicService, fifoPath string) (*FifoInterface, error) {
@@ -38,7 +39,7 @@ func NewFifoInterface(service application.MusicService, fifoPath string) (*FifoI
 		return nil, fmt.Errorf("failed to open FIFO: %w", err)
 	}
 
-	return &FifoInterface{
+	fifoInterface := &FifoInterface{
 		router: map[string]handler.HandlerFunc{
 			"REMOTE_SONG": handler.ReserveSong,
 			"USBMSG_READ": handler.UpdateReading,
@@ -46,7 +47,12 @@ func NewFifoInterface(service application.MusicService, fifoPath string) (*FifoI
 		watcher:      watcher,
 		fifoFile:     fifo,
 		musicService: service,
-	}, nil
+		doChan:       make(chan string),
+	}
+
+	go fifoInterface.processDoChan()
+
+	return fifoInterface, nil
 }
 
 func (f *FifoInterface) Run() {
@@ -62,10 +68,7 @@ func (f *FifoInterface) Run() {
 				scanner := bufio.NewScanner(f.fifoFile)
 				for scanner.Scan() {
 					line := scanner.Text()
-
-					ctx := context.Background()
-					go f.Do(ctx, line)
-
+					f.doChan <- line
 					fmt.Printf("Received: %s\n", line)
 				}
 				if err := scanner.Err(); err != nil {
@@ -79,6 +82,13 @@ func (f *FifoInterface) Run() {
 			}
 			log.Printf("Watcher error: %v", err)
 		}
+	}
+}
+
+func (f *FifoInterface) processDoChan() {
+	for line := range f.doChan {
+		ctx := context.Background()
+		f.Do(ctx, line)
 	}
 }
 

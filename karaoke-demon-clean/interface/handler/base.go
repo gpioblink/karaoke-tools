@@ -12,6 +12,7 @@ type Request struct {
 }
 
 type HandlerFunc func(context.Context, application.MusicService, Request)
+type HandlerFuncWithResponse func(context.Context, application.MusicService, Request) string
 
 func NewRequest(action string, params []string) *Request {
 	return &Request{

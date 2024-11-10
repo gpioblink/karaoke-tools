@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"gpioblink.com/x/karaoke-demon-clean/application"
@@ -12,14 +13,17 @@ import (
 )
 
 type BluetoothInterface struct {
-	router        map[string]handler.HandlerFunc
+	router        map[string]handler.HandlerFuncWithResponse
 	adapter       *bluetooth.Adapter
 	advertisement *bluetooth.Advertisement
 	serviceUUID   bluetooth.UUID
 	rxUUID        bluetooth.UUID
 	txUUID        bluetooth.UUID
 
-	musicService application.MusicService
+	musicService  application.MusicService
+	receiveBuffer []byte      // Buffer to accumulate data
+	bufferLock    sync.Mutex  // Mutex to protect the buffer
+	doLock        chan string // Channel to control access to Do function
 }
 
 func NewBluetoothInterface(service application.MusicService) *BluetoothInterface {
@@ -38,8 +42,10 @@ func NewBluetoothInterface(service application.MusicService) *BluetoothInterface
 	}))
 
 	return &BluetoothInterface{
-		router: map[string]handler.HandlerFunc{
-			"REMOTE_SONG": handler.ReserveSong,
+		router: map[string]handler.HandlerFuncWithResponse{
+			"REMOTE_SONG":  handler.ReserveSongResult,
+			"RESERVATIONS": handler.ListReservations,
+			"SLOTS":        handler.ListSlots,
 		},
 		adapter:       adapter,
 		advertisement: adv,
@@ -47,12 +53,12 @@ func NewBluetoothInterface(service application.MusicService) *BluetoothInterface
 		rxUUID:        rxUUID,
 		txUUID:        txUUID,
 		musicService:  service,
+		receiveBuffer: make([]byte, 0),      // Initialize receive buffer
+		doLock:        make(chan string, 1), // Initialize channel with buffer size 1
 	}
 }
 
 func (b *BluetoothInterface) Run() {
-
-	// Define the peripheral device service.
 	var rxChar bluetooth.Characteristic
 	var txChar bluetooth.Characteristic
 	service := bluetooth.Service{
@@ -63,33 +69,22 @@ func (b *BluetoothInterface) Run() {
 				UUID:   b.rxUUID,
 				Flags:  bluetooth.CharacteristicWritePermission | bluetooth.CharacteristicWriteWithoutResponsePermission,
 				WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
-					log.Printf("Received: %s", value)
+					log.Printf("Received chunk: %s", value)
 
-					ctx := context.Background()
-					go b.Do(ctx, string(value))
+					b.bufferLock.Lock()
+					b.receiveBuffer = append(b.receiveBuffer, value...) // Append received bytes to buffer
+					b.bufferLock.Unlock()
 
-					var line []byte
-					line = []byte("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.")
-					for {
-						sendbuf := line // copy buffer
-						// Reset the slice while keeping the buffer in place.
-						line = line[:0]
+					// Check if we've received a full command (e.g., ending with a newline)
+					if strings.HasSuffix(string(b.receiveBuffer), "\n") {
+						b.bufferLock.Lock()
+						fullMessage := string(b.receiveBuffer)
+						b.receiveBuffer = b.receiveBuffer[:0] // Clear buffer after processing
+						b.bufferLock.Unlock()
 
-						// Send the sendbuf after breaking it up in pieces.
-						for len(sendbuf) != 0 {
-							// Chop off up to 20 bytes from the sendbuf.
-							partlen := 20
-							if len(sendbuf) < 20 {
-								partlen = len(sendbuf)
-							}
-							part := sendbuf[:partlen]
-							sendbuf = sendbuf[partlen:]
-
-							// This also sends a notification.
-							_, err := txChar.Write(part)
-							must("send notification", err)
-							// time.Sleep(time.Second)
-						}
+						// Send fullMessage to the channel
+						b.doLock <- strings.TrimSpace(fullMessage)
+						b.receiveBuffer = make([]byte, 0) // Initialize receive buffer
 					}
 				},
 			},
@@ -108,8 +103,13 @@ func (b *BluetoothInterface) Run() {
 	println("advertising...")
 
 	for {
-		// Sleep forever.
-		time.Sleep(time.Hour)
+		select {
+		case fullMessage := <-b.doLock:
+			ctx := context.Background()
+			b.Do(ctx, fullMessage)
+		case <-time.After(time.Hour):
+			// Do nothing, just keep the loop running
+		}
 	}
 }
 
