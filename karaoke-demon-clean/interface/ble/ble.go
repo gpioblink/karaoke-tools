@@ -26,7 +26,13 @@ type BluetoothInterface struct {
 	doLock        chan string // Channel to control access to Do function
 }
 
-func NewBluetoothInterface(service application.MusicService) *BluetoothInterface {
+var DefaultRouter = map[string]handler.HandlerFuncWithResponse{
+	"REMOTE_SONG":  handler.ReserveSongResult,
+	"RESERVATIONS": handler.ListReservations,
+	"SLOTS":        handler.ListSlots,
+}
+
+func NewBluetoothInterface(service application.MusicService, router map[string]handler.HandlerFuncWithResponse) *BluetoothInterface {
 	adapter := bluetooth.DefaultAdapter
 	serviceUUID := bluetooth.NewUUID([16]byte{0x83, 0x71, 0xc4, 0x6d, 0x97, 0x96, 0x4a, 0x80, 0x94, 0x11, 0xcc, 0x73, 0x8d, 0xcd, 0xb5, 0xee})
 	rxUUID := bluetooth.CharacteristicUUIDUARTRX
@@ -42,11 +48,7 @@ func NewBluetoothInterface(service application.MusicService) *BluetoothInterface
 	}))
 
 	return &BluetoothInterface{
-		router: map[string]handler.HandlerFuncWithResponse{
-			"REMOTE_SONG":  handler.ReserveSongResult,
-			"RESERVATIONS": handler.ListReservations,
-			"SLOTS":        handler.ListSlots,
-		},
+		router:        router,
 		adapter:       adapter,
 		advertisement: adv,
 		serviceUUID:   serviceUUID,

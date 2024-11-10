@@ -22,7 +22,12 @@ type FifoInterface struct {
 	doChan       chan string
 }
 
-func NewFifoInterface(service application.MusicService, fifoPath string) (*FifoInterface, error) {
+var DefaultRouter = map[string]handler.HandlerFunc{
+	"REMOTE_SONG": handler.ReserveSong,
+	"USBMSG_READ": handler.UpdateReading,
+}
+
+func NewFifoInterface(service application.MusicService, router map[string]handler.HandlerFunc, fifoPath string) (*FifoInterface, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create watcher: %w", err)
@@ -40,10 +45,7 @@ func NewFifoInterface(service application.MusicService, fifoPath string) (*FifoI
 	}
 
 	fifoInterface := &FifoInterface{
-		router: map[string]handler.HandlerFunc{
-			"REMOTE_SONG": handler.ReserveSong,
-			"USBMSG_READ": handler.UpdateReading,
-		},
+		router:       DefaultRouter,
 		watcher:      watcher,
 		fifoFile:     fifo,
 		musicService: service,
