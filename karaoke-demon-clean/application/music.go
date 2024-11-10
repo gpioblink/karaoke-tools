@@ -110,17 +110,17 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	}
 	var availableSlot *slot.Slot
 	for _, s := range slots {
+		// Check no reservation and video is attached to the slot
+		if s.Reservation() != nil || s.Video() != nil {
+			continue
+		}
+
 		if s.State() == slot.Available {
 			availableSlot = s
 			break
 		}
 	}
 	if availableSlot == nil {
-		return nil
-	}
-
-	// Check no reservation and video is attached to the slot
-	if availableSlot.Reservation() != nil || availableSlot.Video() != nil {
 		return nil
 	}
 
@@ -147,7 +147,10 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	}
 
 	// Find Correct Video for the next reservation
-	currentSong := nextReservation.Song()
+	currentSong, err := nextReservation.Song()
+	if err != nil {
+		return err
+	}
 	video, err := s.videoRepo.FindByRequestNo(string((currentSong.RequestNo())))
 	if err != nil {
 		return err

@@ -15,15 +15,18 @@ type SeqNum int
 
 type Reservation struct {
 	seq  SeqNum
-	song song.Song
+	song *song.Song
 }
 
 func (r *Reservation) Seq() SeqNum {
 	return r.seq
 }
 
-func (r *Reservation) Song() song.Song {
-	return r.song
+func (r *Reservation) Song() (*song.Song, error) {
+	if r.song == nil {
+		return nil, ErrReservationSongEmpty
+	}
+	return r.song, nil
 }
 
 func NewReservation(seq SeqNum, song *song.Song) (*Reservation, error) {
@@ -33,5 +36,5 @@ func NewReservation(seq SeqNum, song *song.Song) (*Reservation, error) {
 	if song == nil {
 		return nil, ErrReservationSongEmpty
 	}
-	return &Reservation{seq: seq, song: *song}, nil
+	return &Reservation{seq: seq, song: song}, nil
 }

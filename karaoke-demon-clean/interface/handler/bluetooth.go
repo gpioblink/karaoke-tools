@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"gpioblink.com/x/karaoke-demon-clean/application"
 	"gpioblink.com/x/karaoke-demon-clean/domain/song"
@@ -34,8 +35,13 @@ var ListReservations HandlerFuncWithResponse = func(ctx context.Context, service
 
 	reservationStr := ""
 	for _, r := range reservations {
-		song := r.Song()
-		reservationStr += fmt.Sprintf("seq: %d, requestNo: %s\n", r.Seq(), string(song.RequestNo()))
+		songNo := ""
+		song, err := r.Song()
+		if err == nil {
+			songNo = string(song.RequestNo())
+		}
+
+		reservationStr += fmt.Sprintf("seq: %d, requestNo: %s\n", r.Seq(), songNo)
 	}
 
 	return reservationStr
@@ -50,7 +56,22 @@ var ListSlots HandlerFuncWithResponse = func(ctx context.Context, service applic
 
 	slotStr := ""
 	for _, s := range slots {
-		slotStr += fmt.Sprintf("id: %d, state: %s\n", s.Id(), s.State())
+		songNo := ""
+		seq := -1
+		location := ""
+		if s.Reservation() != nil {
+			seq = int(s.Reservation().Seq())
+
+			song, err := s.Reservation().Song()
+			if err == nil {
+				songNo = string(song.RequestNo())
+			}
+		}
+		if s.Video() != nil {
+			location = filepath.Base(s.Video().Location())
+		}
+
+		slotStr += fmt.Sprintf("id: %d, state: %s, res: seq=%d, songNo=%s, video: %s, isWriting: %t\n", s.Id(), s.State(), seq, songNo, location, s.IsWriting())
 	}
 
 	log.Printf("slotStr: %s", slotStr)
