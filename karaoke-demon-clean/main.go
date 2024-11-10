@@ -23,15 +23,19 @@ func main() {
 
 	musicService := application.NewMusicService(reservationRepository, slotRepository, videoRepository)
 
-	fifoInterface, err := fifo.NewFifoInterface(musicService, fifo.DefaultRouter, "/tmp/karaoke-demon.fifo")
+	log.Println("Starting FIFO interface...")
+	fifoInterface, err := fifo.NewFifoInterface(musicService, fifo.DefaultRouter, "/tmp/karaoke-fifo")
 	if err != nil {
 		log.Fatalf("failed to create fifo interface: %v", err)
 		panic(err)
 	}
 
-	fifoInterface.Run()
+	go fifoInterface.Run()
 
+	log.Println("Starting BLE interface...")
 	bleInterface := ble.NewBluetoothInterface(musicService, ble.DefaultRouter)
 
-	bleInterface.Run()
+	go bleInterface.Run()
+
+	select {}
 }

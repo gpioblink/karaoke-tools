@@ -13,8 +13,9 @@ type MemoryRepository struct {
 
 func NewMemoryRepository(songRepository song.Repository) *MemoryRepository {
 	return &MemoryRepository{
-		reservations: []reservation.Reservation{},
-		currentSeq:   0,
+		reservations:   []reservation.Reservation{},
+		songRepository: songRepository,
+		currentSeq:     0,
 	}
 }
 

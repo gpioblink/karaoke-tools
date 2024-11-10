@@ -71,7 +71,7 @@ func (f *FifoInterface) Run() {
 				for scanner.Scan() {
 					line := scanner.Text()
 					f.doChan <- line
-					fmt.Printf("Received: %s\n", line)
+					log.Printf("Received FIFO: %s\n", line)
 				}
 				if err := scanner.Err(); err != nil {
 					log.Printf("Error reading from FIFO: %v", err)

@@ -55,7 +55,7 @@ func NewEmptySlot(id int) *Slot {
 }
 
 func NewSlot(id int, state State, reservation *reservation.Reservation, video *video.Video, isWriting bool) (*Slot, error) {
-	if id == 0 {
+	if id < 0 {
 		return nil, ErrSlotIdEmpty
 	}
 	if state == "" {

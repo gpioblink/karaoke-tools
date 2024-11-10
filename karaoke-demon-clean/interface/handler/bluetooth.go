@@ -53,5 +53,7 @@ var ListSlots HandlerFuncWithResponse = func(ctx context.Context, service applic
 		slotStr += fmt.Sprintf("id: %d, state: %s\n", s.Id(), s.State())
 	}
 
+	log.Printf("slotStr: %s", slotStr)
+
 	return slotStr
 }

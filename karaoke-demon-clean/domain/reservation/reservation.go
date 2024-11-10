@@ -27,7 +27,7 @@ func (r *Reservation) Song() song.Song {
 }
 
 func NewReservation(seq SeqNum, song *song.Song) (*Reservation, error) {
-	if seq == 0 {
+	if seq < 0 {
 		return nil, ErrReservationSeqEmpty
 	}
 	if song == nil {
