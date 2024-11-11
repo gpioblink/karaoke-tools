@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const ContinuousBytesThreshold = (512 * 32) * 16
+const ContinuousBytesThreshold = (512 * 32) * 64 // 1MiB
 
 func watchKmsg(messages chan<- string, kmsgPath string) {
 	// FIXME: sleepでpollingしない
