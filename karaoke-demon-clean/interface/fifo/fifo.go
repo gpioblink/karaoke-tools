@@ -103,4 +103,19 @@ func (f *FifoInterface) Do(ctx context.Context, line string) {
 	} else {
 		log.Printf("Unknown command: %s", action)
 	}
+
+	// for debug print
+	// print executed command and slot and reservation list
+	fmt.Printf("Executed Command: %s\n", line)
+	fmt.Println("Slot List:")
+	slots, _ := f.musicService.ListSlots()
+	for _, slot := range slots {
+		fmt.Printf("Slot %d: %#v\n", slot.Id(), slot)
+	}
+
+	fmt.Println("Reservation List:")
+	reservations, _ := f.musicService.ListReservations()
+	for _, reservation := range reservations {
+		fmt.Printf("Reservation %d: %#v\n", reservation.Seq(), reservation)
+	}
 }
