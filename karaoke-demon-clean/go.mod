@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/joho/godotenv v1.5.1
 	golang.org/x/sys v0.13.0 // indirect
 	tinygo.org/x/bluetooth v0.10.0
 )

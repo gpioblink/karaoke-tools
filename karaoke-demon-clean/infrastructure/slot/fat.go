@@ -31,6 +31,10 @@ func NewFatRepository(imagePath string, dummyFilePath string) (*FatRepository, e
 
 	// makemyfatコマンドにより空イメージファイルの作成
 	// makemyfat create test1.img 2GiB mp4 3 512MiB 1
+
+	//print command
+	fmt.Println("Execute:", "makemyfat", "create", imagePath, IMAGE_SIZE, VIDEO_EXT, VIDEO_NUM, VIDEO_SIZE, "1")
+
 	if err := exec.Command("makemyfat", "create",
 		imagePath, IMAGE_SIZE, VIDEO_EXT, VIDEO_NUM, VIDEO_SIZE, "1").Run(); err != nil {
 		// イメージファイルの作成に失敗した場合はエラーを出力
