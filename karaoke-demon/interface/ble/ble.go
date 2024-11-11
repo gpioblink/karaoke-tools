@@ -105,7 +105,11 @@ func (b *BluetoothInterface) Run() {
 	must("add service", b.adapter.AddService(&service))
 
 	// Start advertising
-	must("start adv", b.advertisement.Start())
+	//must("start adv", b.advertisement.Start())
+	for err := b.advertisement.Start(); err != nil; err = b.advertisement.Start() {
+		log.Printf("Failed to start advertising: %v", err)
+		time.Sleep(5 * time.Second)
+	}
 
 	println("advertising...")
 
