@@ -25,15 +25,6 @@ var UpdateReading HandlerFunc = func(ctx context.Context, service application.Mu
 	// 	return
 	// }
 
-	/*
-		$ makemyfat create test1.img 2GiB mp4 3 512MiB 1
-		imagePath test1.img, fileSize 2147483648, fileExt mp4, numOfFiles 3, eachFileSize 536870912, isMBR true
-		***** Root File List (MBR Shifted) *****
-		0       MP4[536870912bytes]: LBA 0x00002814-0x00102814 0x0000000000502800-0x0000000020502800 clus=3
-		1       MP4[536870912bytes]: LBA 0x00102814-0x00202814 0x0000000020502800-0x0000000040502800 clus=131075
-		2       MP4[536870912bytes]: LBA 0x00202814-0x00302814 0x0000000040502800-0x0000000060502800 clus=262147
-	*/
-
 	// TODO: ハードコードによる決め打ちをなくす
 	// アドレスを元にファイル番号を特定
 	fileIdx := -1
