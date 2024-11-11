@@ -7,7 +7,7 @@ import (
 
 func main() {
 	messages := make(chan string)
-	go watchKmsg(messages)
+	go watchKmsg(messages, "/dev/kmsg")
 
 	fifo, err := os.OpenFile("/tmp/karaoke-fifo", os.O_WRONLY, 0600)
 	if err != nil {
