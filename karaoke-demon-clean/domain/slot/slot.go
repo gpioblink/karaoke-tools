@@ -10,7 +10,9 @@ import (
 var (
 	ErrSlotIdEmpty    = errors.New("empty slot id")
 	ErrSlotStateEmpty = errors.New("empty slot state")
-	ErrorInvalidState = errors.New("invalid slot state")
+	ErrInvalidState   = errors.New("invalid slot state")
+	ErrSlotBusy       = errors.New("slot is busy")
+	ErrSlotLocked     = errors.New("slot is locked")
 )
 
 type SlotNum int
@@ -66,7 +68,7 @@ func NewSlot(id int, state State, reservation *reservation.Reservation, video *v
 	switch State(state) {
 	case Available, Waiting, Reading, Locked:
 	default:
-		return nil, ErrorInvalidState
+		return nil, ErrInvalidState
 	}
 	return &Slot{id: SlotNum(id), state: State(state), reservation: reservation, video: video, isWriting: isWriting}, nil
 }

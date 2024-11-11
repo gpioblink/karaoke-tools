@@ -36,6 +36,15 @@ func (m *MemoryRepository) AttachReservationAndVideoById(slotId int, reservation
 		return slot.ErrNotFound
 	}
 
+	// check not locked and not writing
+	if s.State() == slot.Locked {
+		return slot.ErrSlotLocked
+	}
+
+	if s.IsWriting() {
+		return slot.ErrSlotBusy
+	}
+
 	newSlot, err := slot.NewSlot(s.Id(), s.State(), reservation, video, false)
 	if err != nil {
 		return err
