@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -108,6 +109,12 @@ func (b *BluetoothInterface) Run() {
 	//must("start adv", b.advertisement.Start())
 	for err := b.advertisement.Start(); err != nil; err = b.advertisement.Start() {
 		log.Printf("Failed to start advertising: %v", err)
+
+		// run: `rfkill unblock all` using cmd
+		if err := exec.Command("rfkill", "unblock", "all").Run(); err != nil {
+			log.Printf("Failed to unblock rfkill: %v", err)
+		}
+
 		time.Sleep(5 * time.Second)
 	}
 
