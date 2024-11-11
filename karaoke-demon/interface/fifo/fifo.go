@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
 	"gpioblink.com/x/karaoke-demon/application"
+	"gpioblink.com/x/karaoke-demon/domain/reservation"
+	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/interface/handler"
 )
 
@@ -109,13 +112,48 @@ func (f *FifoInterface) Do(ctx context.Context, line string) {
 	fmt.Printf("Executed Command: %s\n", line)
 	fmt.Println("Slot List:")
 	slots, _ := f.musicService.ListSlots()
-	for _, slot := range slots {
-		fmt.Printf("Slot %d: %#v\n", slot.Id(), slot)
-	}
+	printSlots(slots)
 
 	fmt.Println("Reservation List:")
 	reservations, _ := f.musicService.ListReservations()
-	for _, reservation := range reservations {
-		fmt.Printf("Reservation %d: %#v\n", reservation.Seq(), reservation)
+	printReservations(reservations)
+}
+
+func printSlots(slots []*slot.Slot) {
+	slotStr := ""
+	for _, s := range slots {
+		songNo := ""
+		seq := -1
+		location := ""
+		if s.Reservation() != nil {
+			seq = int(s.Reservation().Seq())
+
+			song, err := s.Reservation().Song()
+			if err == nil {
+				songNo = string(song.RequestNo())
+			}
+		}
+		if s.Video() != nil {
+			location = filepath.Base(s.Video().Location())
+		}
+
+		slotStr += fmt.Sprintf("id: %d, state: %s, seq: %d, res: seq=%d, songNo=%s, video: %s, isWriting: %t\n", s.Id(), s.State(), s.Seq(), seq, songNo, location, s.IsWriting())
 	}
+
+	log.Printf("slotStr: %s", slotStr)
+}
+
+func printReservations(reservations []*reservation.Reservation) {
+	reservationStr := ""
+	for _, r := range reservations {
+		songNo := ""
+		song, err := r.Song()
+		if err == nil {
+			songNo = string(song.RequestNo())
+		}
+
+		reservationStr += fmt.Sprintf("seq: %d, requestNo: %s\n", r.Seq(), songNo)
+	}
+
+	log.Printf("reservationStr: %s", reservationStr)
 }

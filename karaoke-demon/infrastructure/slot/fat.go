@@ -66,16 +66,8 @@ func (f *FatRepository) Len() int {
 	return f.memoryRepository.Len()
 }
 
-func (f *FatRepository) AttachReservationAndVideoById(slotId int, reservation *reservation.Reservation, video *video.Video) error {
-	// FIXME: 書き込みに失敗した場合のリカバリ処理が必要
-
-	err := f.memoryRepository.AttachReservationAndVideoById(slotId, reservation, video)
-	if err != nil {
-		return err
-	}
-
-	// TODO: 非同期で書き込み処理を行う
-	err = f.writeVideo(slotId, video)
+func (f *FatRepository) AttachReservationById(slotId int, reservation *reservation.Reservation) error {
+	err := f.memoryRepository.AttachReservationById(slotId, reservation)
 	if err != nil {
 		return err
 	}
@@ -84,15 +76,20 @@ func (f *FatRepository) AttachReservationAndVideoById(slotId int, reservation *r
 }
 
 func (f *FatRepository) ChangeVideoById(slotId int, video *video.Video) error {
+	// FIXME: 書き込みに失敗した場合のリカバリ処理が必要
 	err := f.writeVideo(slotId, video)
+	if err != nil {
+		return err
+	}
+	err = f.memoryRepository.ChangeVideoById(slotId, video)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (f *FatRepository) DettachReservationAndVideoById(slotId int) error {
-	return f.memoryRepository.DettachReservationAndVideoById(slotId)
+func (f *FatRepository) DettachReservationById(slotId int) error {
+	return f.memoryRepository.DettachReservationById(slotId)
 }
 
 func (f *FatRepository) SetStateById(slotId int, state slot.State) error {
@@ -101,6 +98,10 @@ func (f *FatRepository) SetStateById(slotId int, state slot.State) error {
 
 func (f *FatRepository) SetWritingFlagById(slotId int, isWriting bool) error {
 	return f.memoryRepository.SetWritingFlagById(slotId, isWriting)
+}
+
+func (f *FatRepository) SetSeqById(slotId int, seq int) error {
+	return f.memoryRepository.SetSeqById(slotId, seq)
 }
 
 func (f *FatRepository) FindById(id int) (*slot.Slot, error) {

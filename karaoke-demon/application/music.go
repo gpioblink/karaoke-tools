@@ -1,8 +1,6 @@
 package application
 
 import (
-	"slices"
-
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
 	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/domain/song"
@@ -67,21 +65,24 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	if err != nil {
 		return err
 	}
-	if prevSlot.State() != slot.Waiting {
-		if prevSlot.Reservation() != nil {
-			err := s.reservationRepo.RemoveBySeq(int(prevSlot.Reservation().Seq()))
-			if err != nil {
-				return err
-			}
-			err = s.slotRepo.DettachReservationAndVideoById(calcPositiveModulo(id-1, s.slotRepo.Len()))
-			if err != nil {
-				return err
-			}
-		}
-		err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
+
+	if prevSlot.Reservation() != nil && prevSlot.State() != slot.Waiting {
+		err := s.reservationRepo.RemoveBySeq(int(prevSlot.Reservation().Seq()))
 		if err != nil {
 			return err
 		}
+		err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
+		if err != nil {
+			return err
+		}
+		err = s.slotRepo.SetSeqById(calcPositiveModulo(id-1, s.slotRepo.Len()), prevSlot.Seq()+3)
+		if err != nil {
+			return err
+		}
+	}
+	err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
+	if err != nil {
+		return err
 	}
 
 	// Make current slot state reading
@@ -112,11 +113,6 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	}
 	var availableSlot *slot.Slot
 	for _, s := range slots {
-		// Check no reservation and video is attached to the slot
-		if s.Reservation() != nil || s.Video() != nil {
-			continue
-		}
-
 		if s.State() == slot.Available {
 			availableSlot = s
 			break
@@ -127,27 +123,8 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	}
 
 	// Attach next reservation to the slot
-	reservations, err := s.reservationRepo.List()
+	nextReservation, err := s.reservationRepo.FindBySeq(int(availableSlot.Seq()))
 	if err != nil {
-		return err
-	}
-
-	// Find next resercation with ignoring already attached reservations
-	var nextReservation *reservation.Reservation
-	alreadyAttachedReservationsSeqList := make([]int, 0)
-	for _, s := range slots {
-		if s.Reservation() != nil {
-			alreadyAttachedReservationsSeqList = append(alreadyAttachedReservationsSeqList, int(s.Reservation().Seq()))
-		}
-	}
-	for _, r := range reservations {
-		if slices.Contains(alreadyAttachedReservationsSeqList, int(r.Seq())) {
-			continue
-		}
-		nextReservation = r
-		break
-	}
-	if nextReservation == nil {
 		return nil
 	}
 
@@ -162,10 +139,12 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	}
 
 	// Attach next reservation to the slot
-	err = s.slotRepo.AttachReservationAndVideoById(availableSlot.Id(), nextReservation, video)
+	err = s.slotRepo.AttachReservationById(availableSlot.Id(), nextReservation)
 	if err != nil {
 		return err
 	}
+
+	s.slotRepo.ChangeVideoById(availableSlot.Id(), video) // FIXME: Error Handling (現状、失敗してもよいのであえてエラーハンドリングはしていない)
 
 	// Set the slot state to waiting
 	err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)

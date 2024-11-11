@@ -27,6 +27,7 @@ const (
 
 type Slot struct {
 	id          SlotNum
+	seq         int
 	state       State
 	reservation *reservation.Reservation
 	video       *video.Video
@@ -35,6 +36,10 @@ type Slot struct {
 
 func (s *Slot) Id() int {
 	return int(s.id)
+}
+
+func (s *Slot) Seq() int {
+	return s.seq
 }
 
 func (s *Slot) State() State {
@@ -53,11 +58,11 @@ func (s *Slot) IsWriting() bool {
 	return s.isWriting
 }
 
-func NewEmptySlot(id int) *Slot {
-	return &Slot{id: SlotNum(id), state: Available, reservation: nil, video: nil, isWriting: false}
+func NewEmptySlot(id int, seq int) *Slot {
+	return &Slot{id: SlotNum(id), seq: seq, state: Available, reservation: nil, video: nil, isWriting: false}
 }
 
-func NewSlot(id int, state State, reservation *reservation.Reservation, video *video.Video, isWriting bool) (*Slot, error) {
+func NewSlot(id int, seq int, state State, reservation *reservation.Reservation, video *video.Video, isWriting bool) (*Slot, error) {
 	if id < 0 {
 		return nil, ErrSlotIdEmpty
 	}
@@ -70,5 +75,5 @@ func NewSlot(id int, state State, reservation *reservation.Reservation, video *v
 	default:
 		return nil, ErrInvalidState
 	}
-	return &Slot{id: SlotNum(id), state: State(state), reservation: reservation, video: video, isWriting: isWriting}, nil
+	return &Slot{id: SlotNum(id), seq: seq, state: State(state), reservation: reservation, video: video, isWriting: isWriting}, nil
 }

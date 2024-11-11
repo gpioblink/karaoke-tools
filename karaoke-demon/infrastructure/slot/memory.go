@@ -4,6 +4,9 @@
 package slot
 
 import (
+	"fmt"
+	"log"
+
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
 	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/domain/video"
@@ -18,7 +21,7 @@ func NewMemoryRepository() *MemoryRepository {
 	// make 3 slot
 	slots := make(map[int]slot.Slot)
 	for i := 0; i < 3; i++ {
-		slots[i] = *slot.NewEmptySlot(i)
+		slots[i] = *slot.NewEmptySlot(i, i)
 	}
 
 	return &MemoryRepository{
@@ -30,22 +33,38 @@ func (m *MemoryRepository) Len() int {
 	return len(m.slots)
 }
 
-func (m *MemoryRepository) AttachReservationAndVideoById(slotId int, reservation *reservation.Reservation, video *video.Video) error {
+func (m *MemoryRepository) AttachReservationById(slotId int, reservation *reservation.Reservation) error {
 	s, ok := m.slots[slotId]
 	if !ok {
 		return slot.ErrNotFound
 	}
 
-	// check not locked and not writing
-	if s.State() == slot.Locked {
-		return slot.ErrSlotLocked
+	// LockやBusyであっても、Reservationはカラオケ本体の予約リストと一致されるべきなので、通す
+	// これらの情報は、あくまでビデオを書き込んで良いかの判定のみに利用する
+	// if s.State() == slot.Locked {
+	// 	return slot.ErrSlotLocked
+	// }
+
+	// if s.IsWriting() {
+	// 	return slot.ErrSlotBusy
+	// }
+
+	newSlot, err := slot.NewSlot(s.Id(), s.Seq(), s.State(), reservation, s.Video(), false)
+	if err != nil {
+		return err
 	}
 
-	if s.IsWriting() {
-		return slot.ErrSlotBusy
+	m.slots[slotId] = *newSlot
+	return nil
+}
+
+func (m *MemoryRepository) SetSeqById(slotId int, seq int) error {
+	s, ok := m.slots[slotId]
+	if !ok {
+		return slot.ErrNotFound
 	}
 
-	newSlot, err := slot.NewSlot(s.Id(), s.State(), reservation, video, false)
+	newSlot, err := slot.NewSlot(s.Id(), seq, s.State(), s.Reservation(), s.Video(), s.IsWriting())
 	if err != nil {
 		return err
 	}
@@ -60,7 +79,21 @@ func (m *MemoryRepository) ChangeVideoById(slotId int, video *video.Video) error
 		return slot.ErrNotFound
 	}
 
-	newSlot, err := slot.NewSlot(s.Id(), s.State(), s.Reservation(), video, s.IsWriting())
+	if video == nil {
+		return fmt.Errorf("video is nil")
+	}
+
+	if s.State() == slot.Locked {
+		log.Fatalf("due to being reserved just before playback, slot %d video is not changed for %s\n", slotId, video.Location())
+		return slot.ErrSlotLocked
+	}
+
+	if s.IsWriting() {
+		log.Fatalf("slot %d video is writing by other call\n", slotId)
+		return slot.ErrSlotBusy
+	}
+
+	newSlot, err := slot.NewSlot(s.Id(), s.Seq(), s.State(), s.Reservation(), video, s.IsWriting())
 	if err != nil {
 		return err
 	}
@@ -69,13 +102,13 @@ func (m *MemoryRepository) ChangeVideoById(slotId int, video *video.Video) error
 	return nil
 }
 
-func (m *MemoryRepository) DettachReservationAndVideoById(slotId int) error {
+func (m *MemoryRepository) DettachReservationById(slotId int) error {
 	s, ok := m.slots[slotId]
 	if !ok {
 		return slot.ErrNotFound
 	}
 
-	newSlot, err := slot.NewSlot(s.Id(), s.State(), nil, nil, false)
+	newSlot, err := slot.NewSlot(s.Id(), s.Seq(), s.State(), nil, s.Video(), s.IsWriting())
 	if err != nil {
 		return err
 	}
@@ -90,7 +123,7 @@ func (m *MemoryRepository) SetStateById(slotId int, state slot.State) error {
 		return slot.ErrNotFound
 	}
 
-	newSlot, err := slot.NewSlot(s.Id(), state, s.Reservation(), s.Video(), s.IsWriting())
+	newSlot, err := slot.NewSlot(s.Id(), s.Seq(), state, s.Reservation(), s.Video(), s.IsWriting())
 	if err != nil {
 		return err
 	}
@@ -105,7 +138,7 @@ func (m *MemoryRepository) SetWritingFlagById(slotId int, isWriting bool) error 
 		return slot.ErrNotFound
 	}
 
-	newSlot, err := slot.NewSlot(s.Id(), s.State(), s.Reservation(), s.Video(), isWriting)
+	newSlot, err := slot.NewSlot(s.Id(), s.Seq(), s.State(), s.Reservation(), s.Video(), isWriting)
 	if err != nil {
 		return err
 	}

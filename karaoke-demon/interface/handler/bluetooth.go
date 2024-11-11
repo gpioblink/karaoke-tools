@@ -71,7 +71,7 @@ var ListSlots HandlerFuncWithResponse = func(ctx context.Context, service applic
 			location = filepath.Base(s.Video().Location())
 		}
 
-		slotStr += fmt.Sprintf("id: %d, state: %s, res: seq=%d, songNo=%s, video: %s, isWriting: %t\n", s.Id(), s.State(), seq, songNo, location, s.IsWriting())
+		slotStr += fmt.Sprintf("id: %d, state: %s, seq: %d, res: seq=%d, songNo=%s, video: %s, isWriting: %t\n", s.Id(), s.State(), s.Seq(), seq, songNo, location, s.IsWriting())
 	}
 
 	log.Printf("slotStr: %s", slotStr)
