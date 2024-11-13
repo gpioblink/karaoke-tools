@@ -63,8 +63,16 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 }
 
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
+	// 前回の読み込み時点から変わっていなければ何もしない
+	currentSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
+	if err == nil {
+		if currentSlot.Id() == id {
+			return nil
+		}
+	}
+
 	// Remove the reservation that is previous reading
-	_, err := s.reservationRepo.DeQueue()
+	_, err = s.reservationRepo.DeQueue()
 	if err != nil {
 		log.Printf("failed to dequeue reservation: %v", err)
 	}
