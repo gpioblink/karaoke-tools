@@ -56,11 +56,10 @@ func watchKmsg(messages chan<- string, kmsgPath string) {
 
 				if totalContinuousLength >= ContinuousBytesThreshold {
 					messages <- fmt.Sprintf("USBMSG_READ %d %d", firstContinuousAddress, totalContinuousLength)
+					debugPrint("USBMSG_READ", firstContinuousAddress, totalContinuousLength)
 					totalContinuousLength = 0
 					firstContinuousAddress = 0
 					prevFinalContinuousAddress = 0
-
-					debugPrint("USBMSG_READ", firstContinuousAddress, totalContinuousLength)
 				}
 			}
 		}
@@ -80,11 +79,11 @@ func debugPrint(tag string, firstContinuousAddress int, totalContinuousLength in
 	// アドレスを元にファイル番号を特定
 	addr := firstContinuousAddress
 	fileIdx := -1
-	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 {
+	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 { // 5253120-542124032
 		fileIdx = 0
-	} else if addr < 0x0000000040502800 {
+	} else if addr < 0x0000000040502800 { // 542124032-1078994944
 		fileIdx = 1
-	} else if addr < 0x0000000060502800 {
+	} else if addr < 0x0000000060502800 { // 1078994944-1615865856
 		fileIdx = 2
 	} else {
 		return
