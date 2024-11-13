@@ -88,6 +88,10 @@ func (f *FatRepository) ChangeVideoById(slotId int, video *video.Video) error {
 	return nil
 }
 
+func (f *FatRepository) GetFirstSlotByState(state slot.State) (*slot.Slot, error) {
+	return f.memoryRepository.GetFirstSlotByState(state)
+}
+
 func (f *FatRepository) DettachReservationById(slotId int) error {
 	return f.memoryRepository.DettachReservationById(slotId)
 }

@@ -60,26 +60,30 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 }
 
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
+	// Remove the reservation that is previous reading
+	_, err := s.reservationRepo.DeQueue()
+	if err != nil {
+		return err
+	}
+
 	// Make previous slot state available because it is not reserved by any reservation now
 	prevSlot, err := s.slotRepo.FindById(calcPositiveModulo(id-1, s.slotRepo.Len()))
 	if err != nil {
 		return err
 	}
 
+	err = s.slotRepo.SetSeqById(calcPositiveModulo(id-1, s.slotRepo.Len()), prevSlot.Seq()+3)
+	if err != nil {
+		return err
+	}
+
 	if prevSlot.Reservation() != nil && prevSlot.State() != slot.Waiting {
-		err := s.reservationRepo.RemoveBySeq(int(prevSlot.Reservation().Seq()))
-		if err != nil {
-			return err
-		}
 		err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
 		if err != nil {
 			return err
 		}
-		err = s.slotRepo.SetSeqById(calcPositiveModulo(id-1, s.slotRepo.Len()), prevSlot.Seq()+3)
-		if err != nil {
-			return err
-		}
 	}
+
 	err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
 	if err != nil {
 		return err
@@ -107,52 +111,53 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 
 func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	// Find Slot that state is available
-	slots, err := s.slotRepo.List()
+	readingSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
 	if err != nil {
 		return err
 	}
-	var availableSlot *slot.Slot
-	for _, s := range slots {
-		if s.State() == slot.Available {
-			availableSlot = s
-			break
+
+	for i := 1; i < s.slotRepo.Len(); i++ {
+		// check if the slot is available
+		availableSlot, err := s.slotRepo.FindById(calcPositiveModulo(readingSlot.Id()+i, s.slotRepo.Len()))
+		if err != nil {
+			return err
 		}
-	}
-	if availableSlot == nil {
-		return nil
-	}
+		if availableSlot.State() != slot.Available {
+			continue
+		}
 
-	// Attach next reservation to the slot
-	nextReservation, err := s.reservationRepo.FindBySeq(int(availableSlot.Seq()))
-	if err != nil {
-		return nil
-	}
+		// Attach next reservation to the slot
+		nextReservation, err := s.reservationRepo.FindByQueueIndex(i)
+		if err != nil {
+			return nil
+		}
 
-	// Find Correct Video for the next reservation
-	currentSong, err := nextReservation.Song()
-	if err != nil {
-		return err
-	}
-	video, err := s.videoRepo.FindByRequestNo(string((currentSong.RequestNo())))
-	if err != nil {
-		return err
-	}
+		// Find Correct Video for the next reservation
+		currentSong, err := nextReservation.Song()
+		if err != nil {
+			return err
+		}
+		video, err := s.videoRepo.FindByRequestNo(string((currentSong.RequestNo())))
+		if err != nil {
+			return err
+		}
 
-	// Attach next reservation to the slot
-	err = s.slotRepo.AttachReservationById(availableSlot.Id(), nextReservation)
-	if err != nil {
-		return err
+		// Attach next reservation to the slot
+		err = s.slotRepo.AttachReservationById(availableSlot.Id(), nextReservation)
+		if err != nil {
+			return err
+		}
+
+		s.slotRepo.ChangeVideoById(availableSlot.Id(), video) // FIXME: Error Handling (現状、失敗してもよいのであえてエラーハンドリングはしていない)
+
+		// Set the slot state to waiting
+		err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)
+		if err != nil {
+			return err
+		}
+
+		// Writing Video Functionality is in Slot Repository, so it is not implemented here
 	}
-
-	s.slotRepo.ChangeVideoById(availableSlot.Id(), video) // FIXME: Error Handling (現状、失敗してもよいのであえてエラーハンドリングはしていない)
-
-	// Set the slot state to waiting
-	err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)
-	if err != nil {
-		return err
-	}
-
-	// Writing Video Functionality is in Slot Repository, so it is not implemented here
 
 	return nil
 }

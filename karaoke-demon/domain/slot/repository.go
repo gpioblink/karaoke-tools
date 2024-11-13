@@ -17,6 +17,7 @@ type Repository interface {
 	SetStateById(slotId int, state State) error
 	SetSeqById(slotId int, seq int) error
 	SetWritingFlagById(slotId int, isWriting bool) error
+	GetFirstSlotByState(state State) (*Slot, error)
 	FindById(id int) (*Slot, error)
 	List() ([]*Slot, error)
 }

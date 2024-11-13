@@ -52,6 +52,13 @@ func (m *MemoryRepository) FindBySeq(seq int) (*reservation.Reservation, error) 
 	return nil, reservation.ErrNotFound
 }
 
+func (m *MemoryRepository) FindByQueueIndex(index int) (*reservation.Reservation, error) {
+	if index < 0 || index >= len(m.reservations) {
+		return nil, reservation.ErrNotFound
+	}
+	return &m.reservations[index], nil
+}
+
 func (m *MemoryRepository) RemoveBySeq(seq int) error {
 	for i, res := range m.reservations {
 		if int(res.Seq()) == seq {
