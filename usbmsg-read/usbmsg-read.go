@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const ContinuousBytesThreshold = (512 * 32) * 16 // 256KB
+const ContinuousBytesThreshold = (512 * 32) * 64
 
 func watchKmsg(messages chan<- string, kmsgPath string) {
 	// FIXME: sleepでpollingしない
@@ -81,9 +81,9 @@ func debugPrint(tag string, firstContinuousAddress int, totalContinuousLength in
 	fileIdx := -1
 	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 { // 5253120-542124032
 		fileIdx = 0
-	} else if addr < 0x0000000040502800 { // 542124032-1078994944
+	} else if addr >= 0x0000000020502800+0x1000000 && addr < 0x0000000040502800 {
 		fileIdx = 1
-	} else if addr < 0x0000000060502800 { // 1078994944-1615865856
+	} else if addr >= 0x0000000040502800+0x1000000 && addr < 0x0000000060502800 {
 		fileIdx = 2
 	} else {
 		return
