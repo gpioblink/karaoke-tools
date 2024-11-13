@@ -25,10 +25,10 @@ func main() {
 	defer log.Println("Karaoke Demon stopped.")
 
 	songRepository := song.NewMemoryRepository()
-	videoRepository := video.NewStorageRepository(conf.VIDEO_DIR, conf.FILLER_VIDEOS_PATH[0])
+	videoRepository := video.NewStorageRepository(conf.VIDEO_DIR, conf.DUMMY1)
 	reservationRepository := reservation.NewMemoryRepository(songRepository)
 	//slotRepository := slot.NewMemoryRepository()
-	slotRepository, err := slot.NewFatRepository(conf.IMAGE_PATH, conf.FILLER_VIDEOS_PATH[0])
+	slotRepository, err := slot.NewFatRepository(conf.IMAGE_PATH, []string{conf.DUMMY1, conf.DUMMY2, conf.DUMMY3})
 	if err != nil {
 		log.Fatalf("failed to create fat repository: %v", err)
 		panic(err)
