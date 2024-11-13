@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const ContinuousBytesThreshold = (512 * 32) * 64 // 1MiB
+const ContinuousBytesThreshold = (512 * 32) * 16 // 256KB
 
 func watchKmsg(messages chan<- string, kmsgPath string) {
 	// FIXME: sleepでpollingしない
@@ -59,6 +59,8 @@ func watchKmsg(messages chan<- string, kmsgPath string) {
 					totalContinuousLength = 0
 					firstContinuousAddress = 0
 					prevFinalContinuousAddress = 0
+
+					debugPrint("USBMSG_READ", firstContinuousAddress, totalContinuousLength)
 				}
 			}
 		}
@@ -71,4 +73,22 @@ func watchKmsg(messages chan<- string, kmsgPath string) {
 
 		time.Sleep(time.Second)
 	}
+}
+
+func debugPrint(tag string, firstContinuousAddress int, totalContinuousLength int) {
+	// TODO: ハードコードによる決め打ちをなくす
+	// アドレスを元にファイル番号を特定
+	addr := firstContinuousAddress
+	fileIdx := -1
+	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 {
+		fileIdx = 0
+	} else if addr < 0x0000000040502800 {
+		fileIdx = 1
+	} else if addr < 0x0000000060502800 {
+		fileIdx = 2
+	} else {
+		return
+	}
+
+	fmt.Printf("%s: firstContinuousAddress: %d, totalContinuousLength: %d, fileIndex: %d\n", tag, firstContinuousAddress, totalContinuousLength, fileIdx)
 }
