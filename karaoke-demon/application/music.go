@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 
@@ -63,10 +64,17 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 }
 
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
-	// 前回の読み込み時点から変わっていなければ何もしない
+	fmt.Printf("Handle: slotId: %d\n", id)
 	currentSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
 	if err == nil {
+		fmt.Printf("Handle: currentId: %d\n", currentSlot.Id())
 		if currentSlot.Id() == id {
+			// 前回の読み込み時点から変わっていなければ何もしない
+			fmt.Println("Handle: No Change")
+			return nil
+		} else if currentSlot.Id() != calcPositiveModulo(id-1, s.slotRepo.Len()) {
+			// 前回から連続するIDでない場合は、おかしいので何もしない
+			fmt.Println("Handle: invalid Order")
 			return nil
 		}
 	}
@@ -83,21 +91,15 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 		return err
 	}
 
-	// err = s.slotRepo.SetSeqById(calcPositiveModulo(id-1, s.slotRepo.Len()), prevSlot.Seq()+3)
-	// if err != nil {
-	// 	return err
-	// }
-
 	if prevSlot.Reservation() != nil && prevSlot.State() != slot.Waiting {
 		err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
 		if err != nil {
 			return err
 		}
-	}
-
-	err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
-	if err != nil {
-		return err
+		err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Make current slot state reading
