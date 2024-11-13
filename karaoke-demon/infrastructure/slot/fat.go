@@ -56,7 +56,7 @@ func NewFatRepository(imagePath string, dummyFilePath string) (*FatRepository, e
 
 	// Memory実装の拡張として実装する
 	return &FatRepository{
-		memoryRepository: NewMemoryRepository(),
+		memoryRepository: NewMemoryRepository(dummyFilePath),
 		imagePath:        imagePath,
 		dummyFilePath:    dummyFilePath,
 	}, nil

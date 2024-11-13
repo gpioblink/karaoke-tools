@@ -6,4 +6,5 @@ var ErrVideoEmpty = errors.New("no such video")
 
 type Repository interface {
 	FindByRequestNo(requestNo string) (*Video, error)
+	GetRandomDummyVideo() (*Video, error)
 }

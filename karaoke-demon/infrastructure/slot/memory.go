@@ -9,6 +9,7 @@ import (
 
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
 	"gpioblink.com/x/karaoke-demon/domain/slot"
+	"gpioblink.com/x/karaoke-demon/domain/song"
 	"gpioblink.com/x/karaoke-demon/domain/video"
 )
 
@@ -16,12 +17,20 @@ type MemoryRepository struct {
 	slots map[int]slot.Slot
 }
 
-func NewMemoryRepository() *MemoryRepository {
+func NewMemoryRepository(dummyFilePath string) *MemoryRepository {
 
 	// make 3 slot
 	slots := make(map[int]slot.Slot)
 	for i := 0; i < 3; i++ {
-		slots[i] = *slot.NewEmptySlot(i, i)
+		video, err := GetDummyVideo(dummyFilePath)
+		if err != nil {
+			log.Fatalf("failed to get dummy video: %v\n", err)
+		}
+		newSlot, err := slot.NewSlot(i, i, slot.Available, nil, video, false)
+		if err != nil {
+			log.Fatalf("failed to create new slot: %v\n", err)
+		}
+		slots[i] = *newSlot
 	}
 
 	repo := &MemoryRepository{
@@ -176,4 +185,12 @@ func (m *MemoryRepository) List() ([]*slot.Slot, error) {
 		slots[i] = &s
 	}
 	return slots, nil
+}
+
+func GetDummyVideo(videoPath string) (*video.Video, error) {
+	song, err := song.NewSongInfo("dummy")
+	if err != nil {
+		return nil, err
+	}
+	return video.NewVideo(song, videoPath)
 }

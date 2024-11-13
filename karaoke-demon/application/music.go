@@ -1,6 +1,9 @@
 package application
 
 import (
+	"log"
+	"path/filepath"
+
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
 	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/domain/song"
@@ -63,7 +66,7 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	// Remove the reservation that is previous reading
 	_, err := s.reservationRepo.DeQueue()
 	if err != nil {
-		return err
+		log.Printf("failed to dequeue reservation: %v", err)
 	}
 
 	// Make previous slot state available because it is not reserved by any reservation now
@@ -72,10 +75,10 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 		return err
 	}
 
-	err = s.slotRepo.SetSeqById(calcPositiveModulo(id-1, s.slotRepo.Len()), prevSlot.Seq()+3)
-	if err != nil {
-		return err
-	}
+	// err = s.slotRepo.SetSeqById(calcPositiveModulo(id-1, s.slotRepo.Len()), prevSlot.Seq()+3)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if prevSlot.Reservation() != nil && prevSlot.State() != slot.Waiting {
 		err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
@@ -113,10 +116,14 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 	// Find Slot that state is available
 	readingSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
 	if err != nil {
-		return err
+		// Readingがないということは、初期状態であるので、0番のスロットから検索するようにする
+		readingSlot, err = s.slotRepo.FindById(0)
+		if err != nil {
+			return err
+		}
 	}
 
-	for i := 1; i < s.slotRepo.Len(); i++ {
+	for i := 0; i < s.slotRepo.Len(); i++ {
 		// check if the slot is available
 		availableSlot, err := s.slotRepo.FindById(calcPositiveModulo(readingSlot.Id()+i, s.slotRepo.Len()))
 		if err != nil {
@@ -129,7 +136,21 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 		// Attach next reservation to the slot
 		nextReservation, err := s.reservationRepo.FindByQueueIndex(i)
 		if err != nil {
-			return nil
+			// 予約がない場合、適当なダミーのビデオを差し込んでおく処理
+
+			// ビデオ名がdummyから始まる場合はすでにフィラーが入っているので無視
+			if availableSlot.Video() != nil && filepath.Base(availableSlot.Video().Location())[:5] == "dummy" {
+				continue
+			}
+
+			// 現時点で予約がない場合は、ダミーのビデオを差し込んでおく
+			video, err := s.videoRepo.GetRandomDummyVideo()
+			if err != nil {
+				return err
+			}
+			s.slotRepo.ChangeVideoById(availableSlot.Id(), video)
+
+			continue
 		}
 
 		// Find Correct Video for the next reservation

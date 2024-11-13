@@ -42,6 +42,14 @@ func (s *StorageRepository) FindByRequestNo(requestNo string) (*video.Video, err
 	return v, nil // TODO: ビデオが存在しない場合の返し方を検討
 }
 
+func (s *StorageRepository) GetRandomDummyVideo() (*video.Video, error) {
+	song, err := song.NewSongInfo("dummy")
+	if err != nil {
+		return nil, err
+	}
+	return video.NewVideo(song, s.fillerVideoPath)
+}
+
 func findFileWithPrefix(dir string, prefix string) (string, error) {
 	fmt.Printf("[FindFileWithPrefix] dir: %s, prefix: %s\n", dir, prefix)
 	// ディレクトリ内のファイルを取得
