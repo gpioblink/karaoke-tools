@@ -66,7 +66,7 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	fmt.Printf("Handle: slotId: %d\n", id)
 	currentSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
-	if err == nil {
+	if currentSlot != nil {
 		fmt.Printf("Handle: currentId: %d\n", currentSlot.Id())
 		if currentSlot.Id() == id {
 			// 前回の読み込み時点から変わっていなければ何もしない
@@ -75,6 +75,13 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 		} else if currentSlot.Id() != calcPositiveModulo(id-1, s.slotRepo.Len()) {
 			// 前回から連続するIDでない場合は、おかしいので何もしない
 			fmt.Println("Handle: invalid Order")
+			return nil
+		}
+	}
+	if err != nil {
+		// まだ一度もreadが来ていない場合、0から始まる場合のみ受け付ける
+		if id != 0 {
+			fmt.Println("Handle: no read yet. invalid Order")
 			return nil
 		}
 	}
