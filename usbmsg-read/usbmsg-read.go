@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const ContinuousBytesThreshold = (512 * 32) * 64
+const ContinuousBytesThreshold = (512 * 32) * 64 // 1MB
 
 func watchKmsg(messages chan<- string, kmsgPath string) {
 	// FIXME: sleepでpollingしない
@@ -56,7 +56,7 @@ func watchKmsg(messages chan<- string, kmsgPath string) {
 
 				if totalContinuousLength >= ContinuousBytesThreshold {
 					messages <- fmt.Sprintf("USBMSG_READ %d %d", firstContinuousAddress, totalContinuousLength)
-					debugPrint("USBMSG_READ", firstContinuousAddress, totalContinuousLength)
+					//debugPrint("USBMSG_READ", firstContinuousAddress, totalContinuousLength)
 					totalContinuousLength = 0
 					firstContinuousAddress = 0
 					prevFinalContinuousAddress = 0
@@ -74,20 +74,20 @@ func watchKmsg(messages chan<- string, kmsgPath string) {
 	}
 }
 
-func debugPrint(tag string, firstContinuousAddress int, totalContinuousLength int) {
-	// TODO: ハードコードによる決め打ちをなくす
-	// アドレスを元にファイル番号を特定
-	addr := firstContinuousAddress
-	fileIdx := -1
-	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 { // 5253120-542124032
-		fileIdx = 0
-	} else if addr >= 0x0000000020502800+0x1000000 && addr < 0x0000000040502800 {
-		fileIdx = 1
-	} else if addr >= 0x0000000040502800+0x1000000 && addr < 0x0000000060502800 {
-		fileIdx = 2
-	} else {
-		return
-	}
+// func debugPrint(tag string, firstContinuousAddress int, totalContinuousLength int) {
+// 	// TODO: ハードコードによる決め打ちをなくす
+// 	// アドレスを元にファイル番号を特定
+// 	addr := firstContinuousAddress
+// 	fileIdx := -1
+// 	if addr >= 0x0000000000502800 && addr < 0x0000000020502800 { // 5253120-542124032
+// 		fileIdx = 0
+// 	} else if addr >= 0x0000000020502800+0x1000000 && addr < 0x0000000040502800 {
+// 		fileIdx = 1
+// 	} else if addr >= 0x0000000040502800+0x1000000 && addr < 0x0000000060502800 {
+// 		fileIdx = 2
+// 	} else {
+// 		return
+// 	}
 
-	fmt.Printf("%s: firstContinuousAddress: %d, totalContinuousLength: %d, fileIndex: %d\n", tag, firstContinuousAddress, totalContinuousLength, fileIdx)
-}
+// 	fmt.Printf("%s: firstContinuousAddress: %d, totalContinuousLength: %d, fileIndex: %d\n", tag, firstContinuousAddress, totalContinuousLength, fileIdx)
+// }
