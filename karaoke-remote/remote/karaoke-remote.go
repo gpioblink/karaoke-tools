@@ -78,15 +78,19 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 	// データビットをまとめて受信し、データを復号する
 	var decoded uint32
 
-	var dataBitRaw = make([]uint32, 66)
-	if err := binary.Read(file, binary.LittleEndian, &dataBitRaw); err != nil {
-		log.Fatalf("Failed to read from LIRC device: %v", err)
-	}
+	// var dataBitRaw = make([]uint32, 66)
+	// if err := binary.Read(file, binary.LittleEndian, &dataBitRaw); err != nil {
+	// 	log.Fatalf("Failed to read from LIRC device: %v", err)
+	// }
+	var dataBitRaw = make([]uint32, 2)
 	for i := 0; i < 32; i++ {
-		mode0 := dataBitRaw[i*2] & 0xff000000
-		value0 := dataBitRaw[i*2] & 0x00ffffff
-		mode1 := dataBitRaw[i*2+1] & 0xff000000
-		value1 := dataBitRaw[i*2+1] & 0x00ffffff
+		if err := binary.Read(file, binary.LittleEndian, &dataBitRaw); err != nil {
+			log.Fatalf("Failed to read from LIRC device: %v", err)
+		}
+		mode0 := dataBitRaw[0] & 0xff000000
+		value0 := dataBitRaw[0] & 0x00ffffff
+		mode1 := dataBitRaw[1] & 0xff000000
+		value1 := dataBitRaw[1] & 0x00ffffff
 
 		if mode0 != LIRC_MODE2_PULSE && !((NEC_T-EX) < value0 && value0 < (NEC_T+EX)) {
 			return nil, fmt.Errorf("invalid data bit")
@@ -103,6 +107,11 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 		} else {
 			return nil, fmt.Errorf("invalid data bit")
 		}
+	}
+
+	// final 2bit (trash)
+	if err := binary.Read(file, binary.LittleEndian, &dataBitRaw); err != nil {
+		log.Fatalf("Failed to read from LIRC device: %v", err)
 	}
 
 	return &Frame{
