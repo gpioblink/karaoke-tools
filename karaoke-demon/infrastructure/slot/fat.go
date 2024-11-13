@@ -46,6 +46,7 @@ func NewFatRepository(imagePath string, dummyFilePath string) (*FatRepository, e
 
 	// ビデオ数の分だけダミーファイルを書き込み
 	for i := 0; i < 3; i++ {
+		fmt.Println("Execute:", "makemyfat", "insert", imagePath, dummyFilePath, fmt.Sprintf("%d", i))
 		if err := exec.Command("makemyfat", "insert",
 			imagePath, dummyFilePath, fmt.Sprintf("%d", i)).Run(); err != nil {
 			// イメージファイルの追加に失敗した場合はエラーを出力

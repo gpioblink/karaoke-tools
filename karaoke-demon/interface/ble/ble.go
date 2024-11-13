@@ -34,6 +34,7 @@ var DefaultRouter = map[string]handler.HandlerFuncWithResponse{
 	"REMOTE_SONG":  handler.ReserveSongResult,
 	"RESERVATIONS": handler.ListReservations,
 	"SLOTS":        handler.ListSlots,
+	"STATUS_JSON":  handler.GetStatusJson,
 }
 
 func NewBluetoothInterface(service *application.MusicService, router map[string]handler.HandlerFuncWithResponse) *BluetoothInterface {
@@ -163,7 +164,7 @@ func (b *BluetoothInterface) Do(ctx context.Context, line string) {
 }
 
 func must(action string, err error) {
-	log.Printf("action: %s", action)
+	// log.Printf("action: %s", action)
 	if err != nil {
 		panic("failed to " + action + ": " + err.Error())
 	}

@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
 	"gpioblink.com/x/karaoke-demon/application"
-	"gpioblink.com/x/karaoke-demon/domain/reservation"
-	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/interface/handler"
+	"gpioblink.com/x/karaoke-demon/tool"
 )
 
 type FifoInterface struct {
@@ -73,8 +71,8 @@ func (f *FifoInterface) Run() {
 				scanner := bufio.NewScanner(f.fifoFile)
 				for scanner.Scan() {
 					line := scanner.Text()
-					f.doChan <- line
 					log.Printf("Received FIFO: %s\n", line)
+					f.doChan <- line
 				}
 				if err := scanner.Err(); err != nil {
 					log.Printf("Error reading from FIFO: %v", err)
@@ -109,51 +107,15 @@ func (f *FifoInterface) Do(ctx context.Context, line string) {
 
 	// for debug print
 	// print executed command and slot and reservation list
-	fmt.Printf("Executed Command: %s\n", line)
+	log.Printf("Executed Command: %s\n", line)
 	fmt.Println("Slot List:")
 	slots, _ := f.musicService.ListSlots()
-	printSlots(slots)
+	fmt.Println(tool.TextSlots(slots))
 
 	fmt.Println("Reservation List:")
 	reservations, _ := f.musicService.ListReservations()
-	printReservations(reservations)
-}
+	fmt.Println(tool.TextReservations(reservations))
 
-func printSlots(slots []*slot.Slot) {
-	slotStr := ""
-	for _, s := range slots {
-		songNo := ""
-		seq := -1
-		location := ""
-		if s.Reservation() != nil {
-			seq = int(s.Reservation().Seq())
-
-			song, err := s.Reservation().Song()
-			if err == nil {
-				songNo = string(song.RequestNo())
-			}
-		}
-		if s.Video() != nil {
-			location = filepath.Base(s.Video().Location())
-		}
-
-		slotStr += fmt.Sprintf("id: %d, state: %s, seq: %d, res: seq=%d, songNo=%s, video: %s, isWriting: %t\n", s.Id(), s.State(), s.Seq(), seq, songNo, location, s.IsWriting())
-	}
-
-	log.Printf("slotStr: %s", slotStr)
-}
-
-func printReservations(reservations []*reservation.Reservation) {
-	reservationStr := ""
-	for _, r := range reservations {
-		songNo := ""
-		song, err := r.Song()
-		if err == nil {
-			songNo = string(song.RequestNo())
-		}
-
-		reservationStr += fmt.Sprintf("seq: %d, requestNo: %s\n", r.Seq(), songNo)
-	}
-
-	log.Printf("reservationStr: %s", reservationStr)
+	fmt.Println("Combined List for BLE (JSON):")
+	fmt.Println(tool.TextCombinedJson(slots, reservations))
 }

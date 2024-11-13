@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"gpioblink.com/x/karaoke-demon/application"
 	"gpioblink.com/x/karaoke-demon/domain/song"
+	"gpioblink.com/x/karaoke-demon/tool"
 )
 
 var ReserveSongResult HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
@@ -33,18 +33,7 @@ var ListReservations HandlerFuncWithResponse = func(ctx context.Context, service
 		return fmt.Sprintf("failed to list reservations: %v", err)
 	}
 
-	reservationStr := ""
-	for _, r := range reservations {
-		songNo := ""
-		song, err := r.Song()
-		if err == nil {
-			songNo = string(song.RequestNo())
-		}
-
-		reservationStr += fmt.Sprintf("seq: %d, requestNo: %s\n", r.Seq(), songNo)
-	}
-
-	return reservationStr
+	return tool.TextReservations(reservations)
 }
 
 var ListSlots HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
@@ -54,27 +43,21 @@ var ListSlots HandlerFuncWithResponse = func(ctx context.Context, service applic
 		return fmt.Sprintf("failed to list slots: %v", err)
 	}
 
-	slotStr := ""
-	for _, s := range slots {
-		songNo := ""
-		seq := -1
-		location := ""
-		if s.Reservation() != nil {
-			seq = int(s.Reservation().Seq())
+	return tool.TextSlots(slots)
+}
 
-			song, err := s.Reservation().Song()
-			if err == nil {
-				songNo = string(song.RequestNo())
-			}
-		}
-		if s.Video() != nil {
-			location = filepath.Base(s.Video().Location())
-		}
-
-		slotStr += fmt.Sprintf("id: %d, state: %s, seq: %d, res: seq=%d, songNo=%s, video: %s, isWriting: %t\n", s.Id(), s.State(), s.Seq(), seq, songNo, location, s.IsWriting())
+var GetStatusJson HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	slots, err := service.ListSlots()
+	if err != nil {
+		log.Fatalf("failed to list slots: %v", err)
+		return fmt.Sprintf("failed to list slots: %v", err)
 	}
 
-	log.Printf("slotStr: %s", slotStr)
+	reservations, err := service.ListReservations()
+	if err != nil {
+		log.Fatalf("failed to list reservations: %v", err)
+		return fmt.Sprintf("failed to list reservations: %v", err)
+	}
 
-	return slotStr
+	return tool.TextCombinedJson(slots, reservations)
 }
