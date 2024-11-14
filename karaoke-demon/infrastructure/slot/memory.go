@@ -17,12 +17,12 @@ type MemoryRepository struct {
 	slots map[int]slot.Slot
 }
 
-func NewMemoryRepository(dummyFiles []string) *MemoryRepository {
+func NewMemoryRepository(dummyFilePath string) *MemoryRepository {
 
 	// make 3 slot
 	slots := make(map[int]slot.Slot)
 	for i := 0; i < 3; i++ {
-		video, err := GetDummyVideo(dummyFiles[i])
+		video, err := GetDummyVideo(dummyFilePath)
 		if err != nil {
 			log.Fatalf("failed to get dummy video: %v\n", err)
 		}
@@ -189,22 +189,6 @@ func (m *MemoryRepository) List() ([]*slot.Slot, error) {
 
 func GetDummyVideo(videoPath string) (*video.Video, error) {
 	song, err := song.NewSongInfo("dummy")
-	if err != nil {
-		return nil, err
-	}
-	return video.NewVideo(song, videoPath)
-}
-
-func GetDummy1Video(videoPath string) (*video.Video, error) {
-	song, err := song.NewSongInfo("dummyfiller1")
-	if err != nil {
-		return nil, err
-	}
-	return video.NewVideo(song, videoPath)
-}
-
-func GetDummy2Video(videoPath string) (*video.Video, error) {
-	song, err := song.NewSongInfo("dummyfiller2")
 	if err != nil {
 		return nil, err
 	}

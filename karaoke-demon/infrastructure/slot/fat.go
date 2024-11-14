@@ -13,7 +13,7 @@ import (
 type FatRepository struct {
 	memoryRepository *MemoryRepository
 	imagePath        string
-	dummyFiles       []string
+	dummyFilePath    string
 }
 
 const IMAGE_SIZE = "1.8GiB"
@@ -21,7 +21,7 @@ const VIDEO_EXT = "mp4"
 const VIDEO_NUM = "3"
 const VIDEO_SIZE = "512MiB"
 
-func NewFatRepository(imagePath string, dummyFiles []string) (*FatRepository, error) {
+func NewFatRepository(imagePath string, dummyFilePath string) (*FatRepository, error) {
 	fmt.Println("Setup image file...")
 
 	// イメージファイルが存在する場合は削除
@@ -46,9 +46,9 @@ func NewFatRepository(imagePath string, dummyFiles []string) (*FatRepository, er
 
 	// ビデオ数の分だけダミーファイルを書き込み
 	for i := 0; i < 3; i++ {
-		fmt.Println("Execute:", "makemyfat", "insert", imagePath, dummyFiles[i], fmt.Sprintf("%d", i))
+		fmt.Println("Execute:", "makemyfat", "insert", imagePath, dummyFilePath, fmt.Sprintf("%d", i))
 		if err := exec.Command("makemyfat", "insert",
-			imagePath, dummyFiles[i], fmt.Sprintf("%d", i)).Run(); err != nil {
+			imagePath, dummyFilePath, fmt.Sprintf("%d", i)).Run(); err != nil {
 			// イメージファイルの追加に失敗した場合はエラーを出力
 			fmt.Println("Failed to insert video.")
 			return nil, err
@@ -57,9 +57,9 @@ func NewFatRepository(imagePath string, dummyFiles []string) (*FatRepository, er
 
 	// Memory実装の拡張として実装する
 	return &FatRepository{
-		memoryRepository: NewMemoryRepository(dummyFiles),
+		memoryRepository: NewMemoryRepository(dummyFilePath),
 		imagePath:        imagePath,
-		dummyFiles:       dummyFiles,
+		dummyFilePath:    dummyFilePath,
 	}, nil
 }
 
