@@ -87,9 +87,9 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	}
 
 	// Remove the reservation that is previous reading
-	// キューからは曲の再生が終わった時点で削除する。そのため1曲も予約してない状態(直前の再生が選曲に紐付いていない場合)では消えないようにする
+	// キューからは曲の再生が終わった時点で削除する。そのため1曲も予約してない状態では消えないようにする
 	_, err = s.reservationRepo.FindByQueueIndex(0)
-	if err == nil && currentSlot != nil && currentSlot.Reservation() != nil {
+	if err == nil && currentSlot != nil {
 		_, err = s.reservationRepo.DeQueue()
 		if err != nil {
 			log.Printf("failed to dequeue reservation: %v", err)
@@ -152,6 +152,30 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 		}
 		if availableSlot.State() != slot.Available {
 			continue
+		} else if availableSlot.Reservation() != nil {
+			// availableでない場合でも実際の予約と乖離がある場合は、予約を更新する
+			currentSong, err := availableSlot.Reservation().Song()
+			if err != nil {
+				continue
+			}
+
+			realReservation, err := s.reservationRepo.FindByQueueIndex(i)
+			if err != nil {
+				continue
+			}
+
+			realSong, err := realReservation.Song()
+			if err != nil {
+				continue
+			}
+
+			if availableSlot.Reservation() != nil && currentSong.RequestNo() != realSong.RequestNo() {
+				err = s.slotRepo.AttachReservationById(availableSlot.Id(), realReservation)
+				if err != nil {
+					return err
+				}
+			}
+
 		}
 
 		// Attach next reservation to the slot
