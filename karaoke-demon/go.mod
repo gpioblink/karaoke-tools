@@ -2,7 +2,10 @@ module gpioblink.com/x/karaoke-demon
 
 go 1.22.2
 
-require github.com/fsnotify/fsnotify v1.8.0
+require (
+	github.com/fsnotify/fsnotify v1.8.0
+	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691
+)
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -13,7 +16,6 @@ require (
 	github.com/soypat/seqs v0.0.0-20240527012110-1201bab640ef // indirect
 	github.com/tinygo-org/cbgo v0.0.4 // indirect
 	github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 // indirect
-	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
 )
 
 require (
