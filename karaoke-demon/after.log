@@ -1,0 +1,527 @@
+Setup image file...
+Execute: makemyfat create /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img 1.8GiB mp4 3 512MiB 1
+Insert initial video files...
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummy.mp4 0
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummy.mp4 1
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummy.mp4 2
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/324244-yes-yuyuyu-yuruyuri_h264.mp4 0
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummy.mp4, isWriting: false
+id: 2, state: available, seq: 2, res: seq=-1, songNo=, video: dummy.mp4, isWriting: false
+
+Reservation List:
+seq: 0, requestNo: 324244
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummy.mp4", "isWriting": false},{"id": 2, "state": "available", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummy.mp4", "isWriting": false}], "reservations": [{"seq": 0, "requestNo": "324244"}]}
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/321445-taiyouiwaku-moeyo-caos_h264.mp4 1
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: available, seq: 2, res: seq=-1, songNo=, video: dummy.mp4, isWriting: false
+
+Reservation List:
+seq: 0, requestNo: 324244
+seq: 1, requestNo: 321445
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "available", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummy.mp4", "isWriting": false}], "reservations": [{"seq": 0, "requestNo": "324244"},{"seq": 1, "requestNo": "321445"}]}
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/365537-jumping_h264.mp4 2
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 0, requestNo: 324244
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 0, "requestNo": "324244"},{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"}]}
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 0, requestNo: 324244
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 0, "requestNo": "324244"},{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"}]}
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 0, requestNo: 324244
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 0, "requestNo": "324244"},{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"}]}
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 0, requestNo: 324244
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 0, "requestNo": "324244"},{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 0
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 0
+Handle: currentId: 0
+Handle: No Change
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 0
+Handle: currentId: 0
+Handle: No Change
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=0, songNo=324244, video: 324244-yes-yuyuyu-yuruyuri_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 1, requestNo: 321445
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": 0, "songNo": "324244"}, "video": "324244-yes-yuyuyu-yuruyuri_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 1, "requestNo": "321445"},{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 1
+Handle: currentId: 0
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/370040-daydream-cafe_h264.mp4 0
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 1
+Handle: currentId: 1
+Handle: No Change
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 1
+Handle: currentId: 1
+Handle: No Change
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=1, songNo=321445, video: 321445-taiyouiwaku-moeyo-caos_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 2, requestNo: 365537
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 1, "songNo": "321445"}, "video": "321445-taiyouiwaku-moeyo-caos_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 2, "requestNo": "365537"},{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 2
+Handle: currentId: 1
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/371280-wakai-chikara_h264.mp4 1
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=2, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 3, requestNo: 208564
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": 2, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 3, "requestNo": "208564"},{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 0
+Handle: currentId: 2
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummyfiller2_h264.mp4 2
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: available, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "available", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 0
+Handle: currentId: 0
+Handle: No Change
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: available, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "available", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 0
+Handle: currentId: 0
+Handle: No Change
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=4, songNo=370040, video: 370040-daydream-cafe_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: available, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 4, requestNo: 370040
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": 4, "songNo": "370040"}, "video": "370040-daydream-cafe_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "available", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 4, "requestNo": "370040"},{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 1
+Handle: currentId: 0
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummyfiller2_h264.mp4 0
+Slot List:
+id: 0, state: available, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "available", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 1
+Handle: currentId: 1
+Handle: No Change
+Slot List:
+id: 0, state: available, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "available", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 1
+Handle: currentId: 1
+Handle: No Change
+Slot List:
+id: 0, state: available, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=5, songNo=371280, video: 371280-wakai-chikara_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 5, requestNo: 371280
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "available", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 5, "songNo": "371280"}, "video": "371280-wakai-chikara_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 5, "requestNo": "371280"}]}
+Handle: slotId: 2
+Handle: currentId: 1
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummyfiller3_h264.mp4 1
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller3_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller3_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": []}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller3_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller3_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": []}
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller3_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller3_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"}]}
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller3_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller3_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"}]}
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/365537-jumping_h264.mp4 1
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: waiting, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "waiting", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 0
+Handle: currentId: 2
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/365537-jumping_h264.mp4 2
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 0
+Handle: currentId: 0
+Handle: No Change
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 0
+Handle: currentId: 0
+Handle: No Change
+Slot List:
+id: 0, state: reading, seq: 0, res: seq=-1, songNo=, video: dummyfiller2_h264.mp4, isWriting: false
+id: 1, state: locked, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: waiting, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "reading", "seq": 0, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller2_h264.mp4", "isWriting": false},{"id": 1, "state": "locked", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "waiting", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 1
+Handle: currentId: 0
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/365537-jumping_h264.mp4 0
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 1
+Handle: currentId: 1
+Handle: No Change
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 1
+Handle: currentId: 1
+Handle: No Change
+Slot List:
+id: 0, state: waiting, seq: 0, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 1, state: reading, seq: 1, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 2, state: locked, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 6, requestNo: 324244
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "waiting", "seq": 0, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 1, "state": "reading", "seq": 1, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 2, "state": "locked", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 6, "requestNo": "324244"},{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 2
+Handle: currentId: 1
+Execute: makemyfat insert /home/gpioblink/mydev/karaoke-tools-storage/karaoke.img /home/gpioblink/Downloads/mvideos/karaoke/output/dummyfiller4_h264.mp4 1
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller4_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller4_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller4_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller4_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
+Handle: slotId: 2
+Handle: currentId: 2
+Handle: No Change
+Slot List:
+id: 0, state: locked, seq: 0, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+id: 1, state: available, seq: 1, res: seq=-1, songNo=, video: dummyfiller4_h264.mp4, isWriting: false
+id: 2, state: reading, seq: 2, res: seq=8, songNo=365537, video: 365537-jumping_h264.mp4, isWriting: false
+
+Reservation List:
+seq: 7, requestNo: 321445
+seq: 8, requestNo: 365537
+
+Combined List for BLE (JSON):
+{"slots": [{"id": 0, "state": "locked", "seq": 0, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false},{"id": 1, "state": "available", "seq": 1, "res": {"seq": -1, "songNo": ""}, "video": "dummyfiller4_h264.mp4", "isWriting": false},{"id": 2, "state": "reading", "seq": 2, "res": {"seq": 8, "songNo": "365537"}, "video": "365537-jumping_h264.mp4", "isWriting": false}], "reservations": [{"seq": 7, "requestNo": "321445"},{"seq": 8, "requestNo": "365537"}]}
