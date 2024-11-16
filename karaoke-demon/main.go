@@ -10,7 +10,6 @@ import (
 	"gpioblink.com/x/karaoke-demon/infrastructure/slot"
 	"gpioblink.com/x/karaoke-demon/infrastructure/song"
 	"gpioblink.com/x/karaoke-demon/infrastructure/video"
-	"gpioblink.com/x/karaoke-demon/interface/ble"
 	"gpioblink.com/x/karaoke-demon/interface/fifo"
 )
 
@@ -45,10 +44,10 @@ func main() {
 
 	go fifoInterface.Run()
 
-	log.Println("Starting BLE interface...")
-	bleInterface := ble.NewBluetoothInterface(musicService, ble.DefaultRouter)
+	// log.Println("Starting BLE interface...")
+	// bleInterface := ble.NewBluetoothInterface(musicService, ble.DefaultRouter)
 
-	go bleInterface.Run()
+	// go bleInterface.Run()
 
 	select {}
 }
