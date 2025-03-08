@@ -15,16 +15,22 @@ const (
 	LIRC_MODE2_TIMEOUT   = uint32(0x03000000)
 	LIRC_MODE2_OVERFLOW  = uint32(0x04000000)
 
-	AEHA_T = 425
-	EX     = 150
+	NEC_T = 562
+	EX    = 150
 
-	PANA_NUM = 0xc0 // 地上D 1ch
+	DAM_CUSTOMER_CODE      = 0xd1
+	DAM_CUSTOMER_CODE_INV  = 0x2d
+	DAM_START_SENDING_SONG = 0x08
+	DAM_STOP_SENDING_SONG  = 0x09
+	DAM_NUM                = 0x30
+	DAM_DASH               = 0x3c
 )
 
 type Frame struct {
-	fixedCode uint32
-	data1     uint8
-	data2     uint8
+	customerCode    uint32
+	customerCodeInv uint32
+	data            uint32
+	dataInv         uint32
 }
 
 func FindFrameLeader(file *os.File) error {
@@ -40,7 +46,7 @@ func FindFrameLeader(file *os.File) error {
 		value := scancode & 0x00ffffff
 		// fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
 
-		if mode != LIRC_MODE2_PULSE && !((AEHA_T*8-EX) < value && value < (AEHA_T*8+EX)) {
+		if mode != LIRC_MODE2_PULSE && !((NEC_T*16-EX) < value && value < (NEC_T*16+EX)) {
 			continue
 		}
 
@@ -53,7 +59,7 @@ func FindFrameLeader(file *os.File) error {
 		value = scancode & 0x00ffffff
 		// fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
 
-		if mode != LIRC_MODE2_SPACE && !((AEHA_T*4-EX) < value && value < (AEHA_T*4+EX)) {
+		if mode != LIRC_MODE2_SPACE && !((NEC_T*8-EX) < value && value < (NEC_T*8+EX)) {
 			continue
 		}
 
@@ -70,11 +76,14 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 	}
 
 	// データビットをまとめて受信し、データを復号する
-	var decoded_fixed uint32
-	var decoded_remote uint16
+	var decoded uint32
 
+	// var dataBitRaw = make([]uint32, 66)
+	// if err := binary.Read(file, binary.LittleEndian, &dataBitRaw); err != nil {
+	// 	log.Fatalf("Failed to read from LIRC device: %v", err)
+	// }
 	var dataBitRaw = make([]uint32, 2)
-	for i := 0; i < 48; i++ {
+	for i := 0; i < 32; i++ {
 		if err := binary.Read(file, binary.LittleEndian, &dataBitRaw); err != nil {
 			log.Fatalf("Failed to read from LIRC device: %v", err)
 		}
@@ -83,23 +92,15 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 		mode1 := dataBitRaw[1] & 0xff000000
 		value1 := dataBitRaw[1] & 0x00ffffff
 
-		if mode0 != LIRC_MODE2_PULSE && !((AEHA_T-EX) < value0 && value0 < (AEHA_T+EX)) {
+		if mode0 != LIRC_MODE2_PULSE && !((NEC_T-EX) < value0 && value0 < (NEC_T+EX)) {
 			return nil, fmt.Errorf("invalid data bit")
 		}
 
 		if mode1 == LIRC_MODE2_SPACE {
-			if (AEHA_T-EX) < value1 && value1 < (AEHA_T+EX) {
-				if i < 32 {
-					decoded_fixed |= 0 << uint(i)
-				} else {
-					decoded_remote |= 0 << uint(i-32)
-				}
-			} else if (AEHA_T*3-EX) < value1 && value1 < (AEHA_T*3+EX) {
-				if i < 32 {
-					decoded_fixed |= 1 << uint(i)
-				} else {
-					decoded_remote |= 1 << uint(i-32)
-				}
+			if (NEC_T-EX) < value1 && value1 < (NEC_T+EX) {
+				decoded |= 0 << uint(i)
+			} else if (NEC_T*3-EX) < value1 && value1 < (NEC_T*3+EX) {
+				decoded |= 1 << uint(i)
 			} else {
 				return nil, fmt.Errorf("invalid data bit")
 			}
@@ -114,9 +115,10 @@ func ReceiveFrame(file *os.File) (*Frame, error) {
 	}
 
 	return &Frame{
-		fixedCode: decoded_fixed,
-		data1:     uint8(decoded_remote & 0xff),
-		data2:     uint8((decoded_remote >> 8) & 0xff),
+		customerCode:    decoded & 0xff,
+		customerCodeInv: (decoded >> 8) & 0xff,
+		data:            (decoded >> 16) & 0xff,
+		dataInv:         (decoded >> 24) & 0xff,
 	}, nil
 }
 
@@ -128,6 +130,7 @@ func ReceiveIRSignals(signalCh chan<- string) {
 	}
 	defer file.Close()
 
+	var isSendingSong bool
 	var songNo string
 
 	// 受信ループ
@@ -141,10 +144,20 @@ func ReceiveIRSignals(signalCh chan<- string) {
 
 		// fmt.Printf("Received IR signal - CustomerCode: 0x%x, Data: 0x%x\n", frame.customerCode, frame.data)
 
-		if frame.fixedCode == 0x0220800f {
-			if PANA_NUM <= frame.data1 && frame.data1 <= PANA_NUM+9 {
-				songNo = fmt.Sprintf("%d", frame.data1-PANA_NUM)
+		if frame.customerCode == 0xd1 && frame.customerCodeInv == 0x2d {
+			switch frame.data {
+			case DAM_START_SENDING_SONG:
+				isSendingSong = true
+				songNo = ""
+			case DAM_STOP_SENDING_SONG:
+				isSendingSong = false
 				signalCh <- fmt.Sprintf("REMOTE_SONG %s", songNo)
+			default:
+				if isSendingSong {
+					if DAM_NUM <= frame.data && frame.data <= DAM_NUM+9 {
+						songNo += fmt.Sprintf("%d", frame.data-DAM_NUM)
+					}
+				}
 			}
 		}
 	}
