@@ -19,9 +19,9 @@ type MemoryRepository struct {
 
 func NewMemoryRepository(dummyFilePath string) *MemoryRepository {
 
-	// make 3 slot
+	// make 2 slot
 	slots := make(map[int]slot.Slot)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 2; i++ {
 		video, err := GetDummyVideo(dummyFilePath)
 		if err != nil {
 			log.Fatalf("failed to get dummy video: %v\n", err)
@@ -98,10 +98,10 @@ func (m *MemoryRepository) ChangeVideoById(slotId int, video *video.Video) error
 		return fmt.Errorf("video is nil")
 	}
 
-	if s.State() == slot.Locked {
-		log.Fatalf("due to being reserved just before playback, slot %d video is not changed for %s\n", slotId, video.Location())
-		return slot.ErrSlotLocked
-	}
+	// if s.State() == slot.Locked {
+	// 	log.Fatalf("due to being reserved just before playback, slot %d video is not changed for %s\n", slotId, video.Location())
+	// 	return slot.ErrSlotLocked
+	// }
 
 	if s.IsWriting() {
 		log.Fatalf("slot %d video is writing by other call\n", slotId)

@@ -20,9 +20,9 @@ type State string
 
 const (
 	Available = State("available")
-	Waiting   = State("waiting")
-	Reading   = State("reading")
-	Locked    = State("locked")
+	// Waiting   = State("waiting")
+	Reading = State("reading")
+	// Locked    = State("locked")
 )
 
 type Slot struct {
@@ -71,7 +71,7 @@ func NewSlot(id int, seq int, state State, reservation *reservation.Reservation,
 	}
 	// stateが宣言されている定数のいずれかであることを確認
 	switch State(state) {
-	case Available, Waiting, Reading, Locked:
+	case Available, Reading:
 	default:
 		return nil, ErrInvalidState
 	}

@@ -97,20 +97,18 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	}
 
 	// Make previous slot state available because it is not reserved by any reservation now
-	prevSlot, err := s.slotRepo.FindById(calcPositiveModulo(id-1, s.slotRepo.Len()))
+	// prevSlot, err := s.slotRepo.FindById(calcPositiveModulo(id-1, s.slotRepo.Len()))
+	// if err != nil {
+	// 	return err
+	// }
+
+	err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
 	if err != nil {
 		return err
 	}
-
-	if prevSlot.State() != slot.Waiting {
-		err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
-		if err != nil {
-			return err
-		}
-		err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
-		if err != nil {
-			return err
-		}
+	err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
+	if err != nil {
+		return err
 	}
 
 	// Make current slot state reading
@@ -119,11 +117,11 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 		return err
 	}
 
-	// Make next slot state locked
-	err = s.slotRepo.SetStateById(calcPositiveModulo(id+1, s.slotRepo.Len()), slot.Locked)
-	if err != nil {
-		return err
-	}
+	// // Make next slot state locked
+	// err = s.slotRepo.SetStateById(calcPositiveModulo(id+1, s.slotRepo.Len()), slot.Locked)
+	// if err != nil {
+	// 	return err
+	// }
 
 	err = s.AttachNextReservationToSlotIfAvailable()
 	if err != nil {
@@ -217,10 +215,10 @@ func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
 		s.slotRepo.ChangeVideoById(availableSlot.Id(), video) // FIXME: Error Handling (現状、失敗してもよいのであえてエラーハンドリングはしていない)
 
 		// Set the slot state to waiting
-		err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)
-		if err != nil {
-			return err
-		}
+		// err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)
+		// if err != nil {
+		// 	return err
+		// }
 
 		// Writing Video Functionality is in Slot Repository, so it is not implemented here
 	}

@@ -30,6 +30,11 @@ func (m *MemoryRepository) EnQueue(requestNo string) error {
 	}
 	m.reservations = append(m.reservations, *res)
 
+	// デモ用: 3つの予約がある場合は、真ん中の予約を削除する
+	if len(m.reservations) >= 3 {
+		m.reservations = append(m.reservations[:1], m.reservations[2:]...)
+	}
+
 	m.currentSeq++
 	return nil
 }
