@@ -16,12 +16,12 @@ var ContinuousBytesThreshold int
 func init() {
 	thresholdStr := os.Getenv(ContinuousBytesThresholdEnv)
 	if thresholdStr == "" {
-		ContinuousBytesThreshold = (512 * 32) * 64 * 4 // default value
+		ContinuousBytesThreshold = (512 * 32) * 16 * 4 // default value
 	} else {
 		threshold, err := strconv.Atoi(thresholdStr)
 		if err != nil {
 			fmt.Printf("Invalid value for %s: %v\n", ContinuousBytesThresholdEnv, err)
-			ContinuousBytesThreshold = (512 * 32) * 64 * 4 // default value
+			ContinuousBytesThreshold = (512 * 32) * 16 * 4 // default value
 		} else {
 			ContinuousBytesThreshold = threshold
 		}
