@@ -53,7 +53,7 @@ func FindFrameLeader(file *os.File) error {
 		value = scancode & 0x00ffffff
 		// fmt.Printf("mode: 0x%x, value: %d\n", mode, value)
 
-		if mode != LIRC_MODE2_SPACE && !((AEHA_T*4-EX) < value && value < (_T*4+EX)) {
+		if mode != LIRC_MODE2_SPACE && !((AEHA_T*4-EX) < value && value < (AEHA_T*4+EX)) {
 			continue
 		}
 
