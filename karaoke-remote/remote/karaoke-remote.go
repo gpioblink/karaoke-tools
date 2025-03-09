@@ -151,7 +151,11 @@ func ReceiveIRSignals(signalCh chan<- string) {
 				songNo = ""
 			case DAM_STOP_SENDING_SONG:
 				isSendingSong = false
-				signalCh <- fmt.Sprintf("REMOTE_SONG %s", songNo)
+				if len(songNo) == 6 {
+					signalCh <- fmt.Sprintf("REMOTE_SONG %s", songNo)
+				} else {
+					log.Printf("Invalid song number: %s. ignored.", songNo)
+				}
 			default:
 				if isSendingSong {
 					if DAM_NUM <= frame.data && frame.data <= DAM_NUM+9 {
