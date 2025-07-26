@@ -25,14 +25,14 @@ var DefaultRouter = map[string]handler.HandlerFunc{
 	"reserve": handler.ReserveSongWebhook,
 }
 
-func NewHttpInterface(service *application.MusicService, router map[string]handler.HandlerFunc, port int) *HttpInterface {
+func NewHttpInterface(service *application.MusicService, router map[string]handler.HandlerFunc) *HttpInterface {
 	mux := http.NewServeMux()
 
 	httpInterface := &HttpInterface{
 		router:       router,
 		musicService: *service,
 		server: &http.Server{
-			Addr:    fmt.Sprintf(":%d", port),
+			Addr:    ":8787",
 			Handler: mux,
 		},
 	}

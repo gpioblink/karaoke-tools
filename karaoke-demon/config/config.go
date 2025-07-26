@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -13,7 +12,6 @@ type Config struct {
 	FIFO_PATH          string
 	VIDEO_DIR          string
 	FILLER_VIDEOS_PATH []string
-	WEBHOOK_PORT       int
 }
 
 func NewConfig() (*Config, error) {
@@ -38,16 +36,8 @@ func NewConfig() (*Config, error) {
 			FIFO_PATH:          "/tmp/karaoke-fifo",
 			VIDEO_DIR:          "/home/output",
 			FILLER_VIDEOS_PATH: []string{"/home/output/dummy.mp4"},
-			WEBHOOK_PORT:       8787,
 		}, nil
 		// return nil, fmt.Errorf("error loading %s file", envFile)
-	}
-
-	webhookPort := 8080
-	if portStr := os.Getenv("WEBHOOK_PORT"); portStr != "" {
-		if port, err := strconv.Atoi(portStr); err == nil {
-			webhookPort = port
-		}
 	}
 
 	return &Config{
@@ -55,6 +45,5 @@ func NewConfig() (*Config, error) {
 		FIFO_PATH:          os.Getenv("FIFO_PATH"),
 		VIDEO_DIR:          os.Getenv("VIDEO_DIR"),
 		FILLER_VIDEOS_PATH: []string{os.Getenv("DUMMY_VIDEO_PATH")},
-		WEBHOOK_PORT:       webhookPort,
 	}, nil
 }

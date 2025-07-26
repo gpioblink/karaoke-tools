@@ -52,7 +52,7 @@ func main() {
 	go bleInterface.Run()
 
 	log.Println("Starting HTTP webhook interface...")
-	httpInterface := http.NewHttpInterface(musicService, http.DefaultRouter, conf.WEBHOOK_PORT)
+	httpInterface := http.NewHttpInterface(musicService, http.DefaultRouter)
 
 	go httpInterface.Run()
 

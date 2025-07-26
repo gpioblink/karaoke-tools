@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"gpioblink.com/x/karaoke-demon/application"
+	"gpioblink.com/x/karaoke-demon/domain/ngrok"
 	"gpioblink.com/x/karaoke-demon/domain/song"
 	"gpioblink.com/x/karaoke-demon/domain/wifi"
 	"gpioblink.com/x/karaoke-demon/tool"
@@ -97,4 +98,29 @@ var GetWiFiStatus HandlerFuncWithResponse = func(ctx context.Context, service ap
 	}
 
 	return fmt.Sprintf("connected to: %s", currentSSID)
+}
+
+var StartNgrok HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	ngrokService := ngrok.NewNgrokService(8787)
+	
+	err := ngrokService.Start()
+	if err != nil {
+		log.Printf("failed to start ngrok: %v", err)
+		return fmt.Sprintf("failed to start ngrok: %v", err)
+	}
+
+	publicURL := ngrokService.GetPublicURL()
+	log.Printf("ngrok tunnel started: %s", publicURL)
+	return fmt.Sprintf("ngrok started: %s/webhook/reserve", publicURL)
+}
+
+var GetWebhookURL HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	ngrokService := ngrok.NewNgrokService(8787)
+	
+	publicURL := ngrokService.GetPublicURL()
+	if publicURL == "" {
+		return "ngrok tunnel not running or not available"
+	}
+
+	return fmt.Sprintf("%s/webhook/reserve", publicURL)
 }

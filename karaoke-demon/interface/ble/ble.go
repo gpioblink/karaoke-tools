@@ -31,12 +31,14 @@ type BluetoothInterface struct {
 }
 
 var DefaultRouter = map[string]handler.HandlerFuncWithResponse{
-	"REMOTE_SONG":  handler.ReserveSongResult,
-	"RESERVATIONS": handler.ListReservations,
-	"SLOTS":        handler.ListSlots,
-	"STATUS_JSON":  handler.GetStatusJson,
-	"WIFI_CONFIG":  handler.ConfigureWiFi,
-	"WIFI_STATUS":  handler.GetWiFiStatus,
+	"REMOTE_SONG":   handler.ReserveSongResult,
+	"RESERVATIONS":  handler.ListReservations,
+	"SLOTS":         handler.ListSlots,
+	"STATUS_JSON":   handler.GetStatusJson,
+	"WIFI_CONFIG":   handler.ConfigureWiFi,
+	"WIFI_STATUS":   handler.GetWiFiStatus,
+	"START_NGROK":   handler.StartNgrok,
+	"WEBHOOK_URL":   handler.GetWebhookURL,
 }
 
 func NewBluetoothInterface(service *application.MusicService, router map[string]handler.HandlerFuncWithResponse) *BluetoothInterface {
