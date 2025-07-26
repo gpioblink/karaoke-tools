@@ -35,6 +35,8 @@ var DefaultRouter = map[string]handler.HandlerFuncWithResponse{
 	"RESERVATIONS": handler.ListReservations,
 	"SLOTS":        handler.ListSlots,
 	"STATUS_JSON":  handler.GetStatusJson,
+	"WIFI_CONFIG":  handler.ConfigureWiFi,
+	"WIFI_STATUS":  handler.GetWiFiStatus,
 }
 
 func NewBluetoothInterface(service *application.MusicService, router map[string]handler.HandlerFuncWithResponse) *BluetoothInterface {

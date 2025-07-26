@@ -7,6 +7,7 @@ import (
 
 	"gpioblink.com/x/karaoke-demon/application"
 	"gpioblink.com/x/karaoke-demon/domain/song"
+	"gpioblink.com/x/karaoke-demon/domain/wifi"
 	"gpioblink.com/x/karaoke-demon/tool"
 )
 
@@ -60,4 +61,40 @@ var GetStatusJson HandlerFuncWithResponse = func(ctx context.Context, service ap
 	}
 
 	return tool.TextCombinedJson(slots, reservations)
+}
+
+var ConfigureWiFi HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	if len(req.params) != 2 {
+		return "params length is not 2 (expected: SSID PASSWORD)"
+	}
+
+	ssid := req.params[0]
+	password := req.params[1]
+
+	wifiService := wifi.NewSystemWiFiService()
+	config := wifi.WiFiConfig{
+		SSID:     ssid,
+		Password: password,
+	}
+
+	err := wifiService.ConfigureWiFi(config)
+	if err != nil {
+		log.Printf("failed to configure WiFi: %v", err)
+		return fmt.Sprintf("failed to configure WiFi: %v", err)
+	}
+
+	log.Printf("successfully configured WiFi: %s", ssid)
+	return fmt.Sprintf("success: WiFi configured for %s", ssid)
+}
+
+var GetWiFiStatus HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	wifiService := wifi.NewSystemWiFiService()
+	
+	currentSSID, err := wifiService.GetCurrentConnection()
+	if err != nil {
+		log.Printf("failed to get WiFi status: %v", err)
+		return fmt.Sprintf("failed to get WiFi status: %v", err)
+	}
+
+	return fmt.Sprintf("connected to: %s", currentSSID)
 }
