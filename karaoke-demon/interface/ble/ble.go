@@ -37,6 +37,7 @@ var DefaultRouter = map[string]handler.HandlerFuncWithResponse{
 	"STATUS_JSON":  handler.GetStatusJson,
 	"WIFI_CONFIG":  handler.ConfigureWiFi,
 	"WIFI_STATUS":  handler.GetWiFiStatus,
+	"WIFI_RESET":   handler.ResetWiFiConfig,
 	"NGROK_START":  handler.StartNgrok,
 	"WEBHOOK_URL":  handler.GetWebhookURL,
 	"NGROK_TOKEN":  handler.ConfigureNgrokToken,

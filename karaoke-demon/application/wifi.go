@@ -133,6 +133,31 @@ func (s *SystemWiFiService) GetCurrentConnection() (string, error) {
 	return "", fmt.Errorf("no active WiFi connection found")
 }
 
+// ResetWiFiConfig removes all WiFi configurations
+func (s *SystemWiFiService) ResetWiFiConfig() error {
+	// Remove all karaoke-wifi-*.config files
+	configDir := "/var/lib/connman"
+	files, err := os.ReadDir(configDir)
+	if err != nil {
+		return fmt.Errorf("failed to read connman directory: %v", err)
+	}
+
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), "karaoke-wifi-") && strings.HasSuffix(file.Name(), ".config") {
+			configPath := fmt.Sprintf("%s/%s", configDir, file.Name())
+			if err := os.Remove(configPath); err != nil {
+				return fmt.Errorf("failed to remove config file %s: %v", file.Name(), err)
+			}
+		}
+	}
+
+	// Disconnect from WiFi and restart connman
+	exec.Command("connmanctl", "disable", "wifi").Run()
+	exec.Command("connmanctl", "enable", "wifi").Run()
+
+	return nil
+}
+
 // configureNTPServer adds NTP server to ConnMan settings using regex
 func configureNTPServer() error {
 	settingsPath := "/var/lib/connman/settings"

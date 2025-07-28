@@ -140,3 +140,16 @@ var ConfigureNgrokToken HandlerFuncWithResponse = func(ctx context.Context, serv
 	log.Printf("successfully configured ngrok auth token")
 	return "success: ngrok auth token configured"
 }
+
+var ResetWiFiConfig HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	wifiService := application.NewSystemWiFiService()
+
+	err := wifiService.ResetWiFiConfig()
+	if err != nil {
+		log.Printf("failed to reset WiFi config: %v", err)
+		return fmt.Sprintf("failed to reset WiFi config: %v", err)
+	}
+
+	log.Printf("successfully reset WiFi configurations")
+	return "success: all WiFi configurations removed"
+}
