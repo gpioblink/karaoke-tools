@@ -139,6 +139,20 @@ func configureNTPServer() error {
 
 	content, err := os.ReadFile(settingsPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// Create entire settings file with NTP configuration
+			defaultContent := `[global]
+OfflineMode=false
+Timeservers = ntp.nict.jp
+
+[WiFi]
+Enable=true
+Tethering=false
+Tethering.Freq=2412
+
+`
+			return os.WriteFile(settingsPath, []byte(defaultContent), 0644)
+		}
 		return fmt.Errorf("failed to read settings: %v", err)
 	}
 
@@ -149,10 +163,20 @@ func configureNTPServer() error {
 		return nil
 	}
 
-	// Add NTP server after OfflineMode in [global] section
+	// If [global] section exists, add NTP server after OfflineMode
 	re := regexp.MustCompile(`(\[global\][^[]*)OfflineMode=false`)
-	newText := re.ReplaceAllString(text, `$1OfflineMode=false
+	if re.MatchString(text) {
+		newText := re.ReplaceAllString(text, `$1OfflineMode=false
 Timeservers = ntp.nict.jp`)
+		return os.WriteFile(settingsPath, []byte(newText), 0644)
+	}
 
+	// If [global] section doesn't exist, add it at the beginning
+	globalSection := `[global]
+OfflineMode=false
+Timeservers = ntp.nict.jp
+
+`
+	newText := globalSection + text
 	return os.WriteFile(settingsPath, []byte(newText), 0644)
 }
