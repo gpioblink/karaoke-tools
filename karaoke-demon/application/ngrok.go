@@ -104,7 +104,7 @@ func (n *NgrokService) getPublicURL() (string, error) {
 	}
 
 	// Find HTTP tunnel for our port
-	localAddr := fmt.Sprintf("localhost:%d", n.localPort)
+	localAddr := fmt.Sprintf("http://localhost:%d", n.localPort)
 	for _, tunnel := range ngrokAPI.Tunnels {
 		if tunnel.Config.Addr == localAddr && strings.HasPrefix(tunnel.PublicURL, "https://") {
 			return tunnel.PublicURL, nil
@@ -132,7 +132,7 @@ func isValidNgrokToken(token string) bool {
 	if len(token) == 0 {
 		return false
 	}
-	
+
 	matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]+$`, token)
 	return matched && len(token) >= 10 && len(token) <= 200
 }
