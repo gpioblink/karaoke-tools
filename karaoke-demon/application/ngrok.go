@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -111,4 +112,27 @@ func (n *NgrokService) getPublicURL() (string, error) {
 	}
 
 	return "", fmt.Errorf("no HTTPS tunnel found for port %d", n.localPort)
+}
+
+func (n *NgrokService) ConfigureAuthToken(token string) error {
+	if !isValidNgrokToken(token) {
+		return fmt.Errorf("invalid ngrok token format")
+	}
+
+	cmd := exec.Command("ngrok", "config", "add-authtoken", token)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to configure ngrok auth token: %v", err)
+	}
+
+	return nil
+}
+
+func isValidNgrokToken(token string) bool {
+	if len(token) == 0 {
+		return false
+	}
+	
+	matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]+$`, token)
+	return matched && len(token) >= 10 && len(token) <= 200
 }

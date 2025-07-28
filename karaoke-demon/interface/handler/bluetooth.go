@@ -122,3 +122,21 @@ var GetWebhookURL HandlerFuncWithResponse = func(ctx context.Context, service ap
 
 	return fmt.Sprintf("%s/webhook/reserve", publicURL)
 }
+
+var ConfigureNgrokToken HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
+	if len(req.params) != 1 {
+		return "params length is not 1 (expected: TOKEN)"
+	}
+
+	token := req.params[0]
+	ngrokService := application.NewNgrokService(8787)
+
+	err := ngrokService.ConfigureAuthToken(token)
+	if err != nil {
+		log.Printf("failed to configure ngrok token: %v", err)
+		return fmt.Sprintf("failed to configure ngrok token: %v", err)
+	}
+
+	log.Printf("successfully configured ngrok auth token")
+	return "success: ngrok auth token configured"
+}
