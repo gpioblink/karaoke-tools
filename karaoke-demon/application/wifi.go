@@ -66,6 +66,11 @@ func (s *SystemWiFiService) ConfigureWiFi(config WiFiConfig) error {
 		return fmt.Errorf("invalid WiFi configuration: %v", err)
 	}
 
+	// Configure NTP server before WiFi setup
+	if err := configureNTPServer(); err != nil {
+		return fmt.Errorf("failed to configure NTP server: %v", err)
+	}
+
 	// Create SHA256 hash of SSID to prevent path traversal
 	hash := sha256.Sum256([]byte(config.SSID))
 	hashStr := hex.EncodeToString(hash[:])
@@ -126,4 +131,28 @@ func (s *SystemWiFiService) GetCurrentConnection() (string, error) {
 	}
 
 	return "", fmt.Errorf("no active WiFi connection found")
+}
+
+// configureNTPServer adds NTP server to ConnMan settings using regex
+func configureNTPServer() error {
+	settingsPath := "/var/lib/connman/settings"
+
+	content, err := os.ReadFile(settingsPath)
+	if err != nil {
+		return fmt.Errorf("failed to read settings: %v", err)
+	}
+
+	text := string(content)
+
+	// Check if NTP is already configured
+	if strings.Contains(text, "Timeservers = ntp.nict.jp") {
+		return nil
+	}
+
+	// Add NTP server after OfflineMode in [global] section
+	re := regexp.MustCompile(`(\[global\][^[]*)OfflineMode=false`)
+	newText := re.ReplaceAllString(text, `$1OfflineMode=false
+Timeservers = ntp.nict.jp`)
+
+	return os.WriteFile(settingsPath, []byte(newText), 0644)
 }
