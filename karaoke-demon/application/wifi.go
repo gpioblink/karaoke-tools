@@ -1,4 +1,4 @@
-package wifi
+package application
 
 import (
 	"fmt"
@@ -26,19 +26,19 @@ func NewSystemWiFiService() *SystemWiFiService {
 func (s *SystemWiFiService) ConfigureWiFi(config WiFiConfig) error {
 	// First, check if connection already exists and delete it
 	connectionName := fmt.Sprintf("karaoke-wifi-%s", config.SSID)
-	
+
 	// Delete existing connection if it exists (ignore errors)
 	exec.Command("nmcli", "connection", "delete", connectionName).Run()
-	
+
 	// Create new WiFi connection
-	cmd := exec.Command("nmcli", "device", "wifi", "connect", config.SSID, 
+	cmd := exec.Command("nmcli", "device", "wifi", "connect", config.SSID,
 		"password", config.Password, "name", connectionName)
-	
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to configure WiFi: %v, output: %s", err, string(output))
 	}
-	
+
 	return nil
 }
 
@@ -49,7 +49,7 @@ func (s *SystemWiFiService) GetCurrentConnection() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get current WiFi connection: %v", err)
 	}
-	
+
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, ":")
@@ -57,6 +57,6 @@ func (s *SystemWiFiService) GetCurrentConnection() (string, error) {
 			return parts[1], nil
 		}
 	}
-	
+
 	return "", fmt.Errorf("no active WiFi connection found")
 }

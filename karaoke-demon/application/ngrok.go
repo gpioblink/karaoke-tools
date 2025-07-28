@@ -1,4 +1,4 @@
-package ngrok
+package application
 
 import (
 	"encoding/json"
@@ -11,10 +11,10 @@ import (
 )
 
 type NgrokService struct {
-	cmd        *exec.Cmd
-	publicURL  string
-	localPort  int
-	isRunning  bool
+	cmd       *exec.Cmd
+	publicURL string
+	localPort int
+	isRunning bool
 }
 
 type NgrokAPI struct {
@@ -40,7 +40,7 @@ func (n *NgrokService) Start() error {
 
 	// Start ngrok tunnel
 	n.cmd = exec.Command("ngrok", "http", fmt.Sprintf("%d", n.localPort))
-	
+
 	err := n.cmd.Start()
 	if err != nil {
 		return fmt.Errorf("failed to start ngrok: %v", err)
