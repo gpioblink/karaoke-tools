@@ -66,11 +66,6 @@ func (s *SystemWiFiService) ConfigureWiFi(config WiFiConfig) error {
 		return fmt.Errorf("invalid WiFi configuration: %v", err)
 	}
 
-	// Configure NTP server before WiFi setup
-	if err := configureNTPServer(); err != nil {
-		return fmt.Errorf("failed to configure NTP server: %v", err)
-	}
-
 	// Create SHA256 hash of SSID to prevent path traversal
 	hash := sha256.Sum256([]byte(config.SSID))
 	hashStr := hex.EncodeToString(hash[:])
@@ -87,6 +82,11 @@ AutoConnect = true
 	err := os.WriteFile(configPath, []byte(configContent), 0600)
 	if err != nil {
 		return fmt.Errorf("failed to create WiFi config: %v", err)
+	}
+
+	// Configure NTP server before WiFi setup
+	if err := configureNTPServer(); err != nil {
+		return fmt.Errorf("failed to configure NTP server: %v", err)
 	}
 
 	// Enable WiFi and scan
@@ -158,15 +158,11 @@ func (s *SystemWiFiService) ResetWiFiConfig() error {
 	return nil
 }
 
-// configureNTPServer adds NTP server to ConnMan settings using regex
+// configureNTPServer overwrites ConnMan settings file with NTP configuration
 func configureNTPServer() error {
 	settingsPath := "/var/lib/connman/settings"
 
-	content, err := os.ReadFile(settingsPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// Create entire settings file with NTP configuration
-			defaultContent := `[global]
+	defaultContent := `[global]
 OfflineMode=false
 Timeservers = ntp.nict.jp
 
@@ -174,34 +170,6 @@ Timeservers = ntp.nict.jp
 Enable=true
 Tethering=false
 Tethering.Freq=2412
-
 `
-			return os.WriteFile(settingsPath, []byte(defaultContent), 0644)
-		}
-		return fmt.Errorf("failed to read settings: %v", err)
-	}
-
-	text := string(content)
-
-	// Check if NTP is already configured
-	if strings.Contains(text, "Timeservers = ntp.nict.jp") {
-		return nil
-	}
-
-	// If [global] section exists, add NTP server after OfflineMode
-	re := regexp.MustCompile(`(\[global\][^[]*)OfflineMode=false`)
-	if re.MatchString(text) {
-		newText := re.ReplaceAllString(text, `$1OfflineMode=false
-Timeservers = ntp.nict.jp`)
-		return os.WriteFile(settingsPath, []byte(newText), 0644)
-	}
-
-	// If [global] section doesn't exist, add it at the beginning
-	globalSection := `[global]
-OfflineMode=false
-Timeservers = ntp.nict.jp
-
-`
-	newText := globalSection + text
-	return os.WriteFile(settingsPath, []byte(newText), 0644)
+	return os.WriteFile(settingsPath, []byte(defaultContent), 0644)
 }
