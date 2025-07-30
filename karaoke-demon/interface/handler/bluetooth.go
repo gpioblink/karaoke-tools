@@ -107,7 +107,12 @@ var StartNgrok HandlerFuncWithResponse = func(ctx context.Context, service appli
 		return fmt.Sprintf("failed to start ngrok: %v", err)
 	}
 
-	publicURL := ngrokService.GetPublicURL()
+	publicURL, err := ngrokService.GetPublicURL()
+	if err != nil {
+		log.Printf("failed to get public url: %v", err)
+		return fmt.Sprintf("failed to start ngrok: %v", err)
+	}
+
 	log.Printf("ngrok tunnel started: %s", publicURL)
 	return fmt.Sprintf("ngrok started: %s/webhook/reserve", publicURL)
 }
@@ -115,8 +120,8 @@ var StartNgrok HandlerFuncWithResponse = func(ctx context.Context, service appli
 var GetWebhookURL HandlerFuncWithResponse = func(ctx context.Context, service application.MusicService, req Request) string {
 	ngrokService := application.NewNgrokService(8787)
 
-	publicURL := ngrokService.GetPublicURL()
-	if publicURL == "" {
+	publicURL, err := ngrokService.GetPublicURL()
+	if err != nil {
 		return "ngrok tunnel not running or not available"
 	}
 

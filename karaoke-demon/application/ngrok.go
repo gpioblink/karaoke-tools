@@ -13,9 +13,7 @@ import (
 
 type NgrokService struct {
 	cmd       *exec.Cmd
-	publicURL string
 	localPort int
-	isRunning bool
 }
 
 type NgrokAPI struct {
@@ -30,15 +28,10 @@ type NgrokAPI struct {
 func NewNgrokService(localPort int) *NgrokService {
 	return &NgrokService{
 		localPort: localPort,
-		isRunning: false,
 	}
 }
 
 func (n *NgrokService) Start() error {
-	if n.isRunning {
-		return fmt.Errorf("ngrok is already running")
-	}
-
 	// Start ngrok tunnel
 	n.cmd = exec.Command("ngrok", "http", fmt.Sprintf("%d", n.localPort))
 
@@ -49,16 +42,6 @@ func (n *NgrokService) Start() error {
 
 	// Wait for ngrok to initialize
 	time.Sleep(3 * time.Second)
-
-	// Get public URL from ngrok API
-	publicURL, err := n.getPublicURL()
-	if err != nil {
-		n.Stop()
-		return fmt.Errorf("failed to get ngrok public URL: %v", err)
-	}
-
-	n.publicURL = publicURL
-	n.isRunning = true
 
 	return nil
 }
@@ -71,20 +54,10 @@ func (n *NgrokService) Stop() error {
 		}
 		n.cmd.Wait()
 	}
-	n.isRunning = false
-	n.publicURL = ""
 	return nil
 }
 
-func (n *NgrokService) GetPublicURL() string {
-	return n.publicURL
-}
-
-func (n *NgrokService) IsRunning() bool {
-	return n.isRunning
-}
-
-func (n *NgrokService) getPublicURL() (string, error) {
+func (n *NgrokService) GetPublicURL() (string, error) {
 	// Query ngrok local API
 	resp, err := http.Get("http://localhost:4040/api/tunnels")
 	if err != nil {
