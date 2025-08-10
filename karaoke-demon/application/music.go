@@ -1,10 +1,11 @@
 package application
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 
+	"gpioblink.com/x/karaoke-demon/application/eventbus"
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
 	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/domain/song"
@@ -21,27 +22,21 @@ type MusicService struct {
 	reservationRepo reservation.Repository
 	slotRepo        slot.Repository
 	videoRepo       video.Repository
+	bus             eventbus.EventBus
 }
 
-// FIXME: Consider Transactions and Race Conditions
-
-func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repository, videoRepo video.Repository) *MusicService {
+func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repository, videoRepo video.Repository, bus eventbus.EventBus) *MusicService {
 	return &MusicService{
 		reservationRepo: reservationRepo,
 		slotRepo:        slotRepo,
 		videoRepo:       videoRepo,
+		bus:             bus,
 	}
 }
 
 func (s *MusicService) ReserveSong(requestNo song.RequestNo) error {
-	err := s.reservationRepo.EnQueue(string(requestNo))
-	if err != nil {
-		return err
-	}
-	err = s.AttachNextReservationToSlotIfAvailable()
-	if err != nil {
-		return err
-	}
+	// 予約イベントを投げ、オーケストレータに処理させる
+	s.bus.Publish(context.Background(), eventbus.ReservationCreated{SongID: string(requestNo)})
 	return nil
 }
 
@@ -64,6 +59,7 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 }
 
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
+	// TODO: なんでこの辺のログファイルを残したのか聞く
 	fmt.Printf("Handle: slotId: %d\n", id)
 	currentSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
 	if currentSlot != nil {
@@ -96,133 +92,15 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 		}
 	}
 
-	// Make previous slot state available because it is not reserved by any reservation now
-	// prevSlot, err := s.slotRepo.FindById(calcPositiveModulo(id-1, s.slotRepo.Len()))
-	// if err != nil {
-	// 	return err
-	// }
-
-	err = s.slotRepo.DettachReservationById(calcPositiveModulo(id-1, s.slotRepo.Len()))
-	if err != nil {
-		return err
-	}
-	err = s.slotRepo.SetStateById(calcPositiveModulo(id-1, s.slotRepo.Len()), slot.Available)
-	if err != nil {
-		return err
-	}
-
-	// Make current slot state reading
-	err = s.slotRepo.SetStateById(id, slot.Reading)
-	if err != nil {
-		return err
-	}
-
-	// // Make next slot state locked
-	// err = s.slotRepo.SetStateById(calcPositiveModulo(id+1, s.slotRepo.Len()), slot.Locked)
-	// if err != nil {
-	// 	return err
-	// }
-
-	err = s.AttachNextReservationToSlotIfAvailable()
-	if err != nil {
-		return err
-	}
+	// 前スロットを開放済みに、現在を読み取りに、次をロックに。完了後に次の割当を促す
+	s.bus.Publish(context.Background(), eventbus.SlotReadingAdvanced{ReadingSlotID: id, TotalSlots: s.slotRepo.Len()})
 
 	return nil
 }
 
 func (s *MusicService) AttachNextReservationToSlotIfAvailable() error {
-	// Find Slot that state is available
-	readingSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
-	if err != nil {
-		// Readingがないということは、初期状態であるので、0番のスロットから検索するようにする
-		readingSlot, err = s.slotRepo.FindById(0)
-		if err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < s.slotRepo.Len(); i++ {
-		// check if the slot is available
-		availableSlot, err := s.slotRepo.FindById(calcPositiveModulo(readingSlot.Id()+i, s.slotRepo.Len()))
-		if err != nil {
-			return err
-		}
-		if availableSlot.State() != slot.Available {
-			continue
-		} else if availableSlot.Reservation() != nil {
-			// availableでない場合でも実際の予約と乖離がある場合は、予約を更新する
-			currentSong, err := availableSlot.Reservation().Song()
-			if err != nil {
-				continue
-			}
-
-			realReservation, err := s.reservationRepo.FindByQueueIndex(i)
-			if err != nil {
-				continue
-			}
-
-			realSong, err := realReservation.Song()
-			if err != nil {
-				continue
-			}
-
-			if availableSlot.Reservation() != nil && currentSong.RequestNo() != realSong.RequestNo() {
-				err = s.slotRepo.AttachReservationById(availableSlot.Id(), realReservation)
-				if err != nil {
-					return err
-				}
-			}
-
-		}
-
-		// Attach next reservation to the slot
-		nextReservation, err := s.reservationRepo.FindByQueueIndex(i)
-		if err != nil {
-			// 予約がない場合、適当なダミーのビデオを差し込んでおく処理
-
-			// ビデオ名がdummyから始まる場合はすでにフィラーが入っているので無視
-			if availableSlot.Video() != nil && filepath.Base(availableSlot.Video().Location())[:5] == "dummy" {
-				continue
-			}
-
-			// 現時点で予約がない場合は、ダミーのビデオを差し込んでおく
-			video, err := s.videoRepo.GetRandomDummyVideo()
-			if err != nil {
-				return err
-			}
-			s.slotRepo.ChangeVideoById(availableSlot.Id(), video)
-
-			continue
-		}
-
-		// Find Correct Video for the next reservation
-		currentSong, err := nextReservation.Song()
-		if err != nil {
-			return err
-		}
-		video, err := s.videoRepo.FindByRequestNo(string((currentSong.RequestNo())))
-		if err != nil {
-			return err
-		}
-
-		// Attach next reservation to the slot
-		err = s.slotRepo.AttachReservationById(availableSlot.Id(), nextReservation)
-		if err != nil {
-			return err
-		}
-
-		s.slotRepo.ChangeVideoById(availableSlot.Id(), video) // FIXME: Error Handling (現状、失敗してもよいのであえてエラーハンドリングはしていない)
-
-		// Set the slot state to waiting
-		// err = s.slotRepo.SetStateById(availableSlot.Id(), slot.Waiting)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// Writing Video Functionality is in Slot Repository, so it is not implemented here
-	}
-
+	// 互換のために残すが、実体はイベント発行でオーケストレータに委譲
+	s.bus.Publish(context.Background(), eventbus.SlotAvailableAppeared{SlotID: -1})
 	return nil
 }
 

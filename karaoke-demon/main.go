@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"gpioblink.com/x/karaoke-demon/application"
+	"gpioblink.com/x/karaoke-demon/application/eventbus"
+	"gpioblink.com/x/karaoke-demon/application/orchestrator"
 	"gpioblink.com/x/karaoke-demon/config"
 	"gpioblink.com/x/karaoke-demon/infrastructure/reservation"
 	"gpioblink.com/x/karaoke-demon/infrastructure/slot"
@@ -35,7 +37,15 @@ func main() {
 		panic(err)
 	}
 
-	musicService := application.NewMusicService(reservationRepository, slotRepository, videoRepository)
+	// イベントバス/オーケストレータ配線
+	bus := eventbus.NewInMemoryEventBus()
+	musicService := application.NewMusicService(reservationRepository, slotRepository, videoRepository, bus)
+	_ = orchestrator.New(orchestrator.Dependencies{
+		Bus:             bus,
+		ReservationRepo: reservationRepository,
+		SlotRepo:        slotRepository,
+		VideoRepo:       videoRepository,
+	})
 
 	log.Println("Starting FIFO interface...")
 	fifoInterface, err := fifo.NewFifoInterface(musicService, fifo.DefaultRouter, conf.FIFO_PATH)

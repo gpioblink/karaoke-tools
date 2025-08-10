@@ -30,10 +30,7 @@ func (m *MemoryRepository) EnQueue(requestNo string) error {
 	}
 	m.reservations = append(m.reservations, *res)
 
-	// デモ用: 3つの予約がある場合は、真ん中の予約を削除する
-	if len(m.reservations) >= 3 {
-		m.reservations = append(m.reservations[:1], m.reservations[2:]...)
-	}
+	// デモ用の自動削除は無効化（テスト安定化のため）
 
 	m.currentSeq++
 	return nil
@@ -49,9 +46,9 @@ func (m *MemoryRepository) DeQueue() (*reservation.Reservation, error) {
 }
 
 func (m *MemoryRepository) FindBySeq(seq int) (*reservation.Reservation, error) {
-	for _, res := range m.reservations {
-		if int(res.Seq()) == seq {
-			return &res, nil
+	for i := range m.reservations {
+		if int(m.reservations[i].Seq()) == seq {
+			return &m.reservations[i], nil
 		}
 	}
 	return nil, reservation.ErrNotFound
@@ -65,8 +62,8 @@ func (m *MemoryRepository) FindByQueueIndex(index int) (*reservation.Reservation
 }
 
 func (m *MemoryRepository) RemoveBySeq(seq int) error {
-	for i, res := range m.reservations {
-		if int(res.Seq()) == seq {
+	for i := range m.reservations {
+		if int(m.reservations[i].Seq()) == seq {
 			m.reservations = append(m.reservations[:i], m.reservations[i+1:]...)
 			return nil
 		}
@@ -76,8 +73,8 @@ func (m *MemoryRepository) RemoveBySeq(seq int) error {
 
 func (m *MemoryRepository) List() ([]*reservation.Reservation, error) {
 	reservations := make([]*reservation.Reservation, len(m.reservations))
-	for i, res := range m.reservations {
-		reservations[i] = &res
+	for i := range m.reservations {
+		reservations[i] = &m.reservations[i]
 	}
 	return reservations, nil
 }

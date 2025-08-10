@@ -19,9 +19,9 @@ type MemoryRepository struct {
 
 func NewMemoryRepository(dummyFilePath string) *MemoryRepository {
 
-	// make 2 slot
+	// make 3 slot (テスト想定に合わせる)
 	slots := make(map[int]slot.Slot)
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		video, err := GetDummyVideo(dummyFilePath)
 		if err != nil {
 			log.Fatalf("failed to get dummy video: %v\n", err)

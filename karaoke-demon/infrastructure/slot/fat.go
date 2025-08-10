@@ -18,7 +18,7 @@ type FatRepository struct {
 
 const IMAGE_SIZE = "1.8GiB"
 const VIDEO_EXT = "mp4"
-const VIDEO_NUM = "2"
+const VIDEO_NUM = "3"
 const VIDEO_SIZE = "512MiB"
 
 func NewFatRepository(imagePath string, dummyFilePath string) (*FatRepository, error) {
@@ -45,7 +45,7 @@ func NewFatRepository(imagePath string, dummyFilePath string) (*FatRepository, e
 	fmt.Println("Insert initial video files...")
 
 	// ビデオ数の分だけダミーファイルを書き込み
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		fmt.Println("Execute:", "makemyfat", "insert", imagePath, dummyFilePath, fmt.Sprintf("%d", i))
 		if err := exec.Command("makemyfat", "insert",
 			imagePath, dummyFilePath, fmt.Sprintf("%d", i)).Run(); err != nil {
