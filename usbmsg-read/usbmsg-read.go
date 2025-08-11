@@ -16,17 +16,17 @@ var ContinuousBytesThreshold int
 func init() {
 	thresholdStr := os.Getenv(ContinuousBytesThresholdEnv)
 	if thresholdStr == "" {
-		ContinuousBytesThreshold = (512 * 32) * 16 * 4 // default value
+		ContinuousBytesThreshold = (512 * 32) * 56 // default value: 896KiB (56 * 16KiB)
 	} else {
 		threshold, err := strconv.Atoi(thresholdStr)
 		if err != nil {
 			fmt.Printf("Invalid value for %s: %v\n", ContinuousBytesThresholdEnv, err)
-			ContinuousBytesThreshold = (512 * 32) * 16 * 4 // default value
+			ContinuousBytesThreshold = (512 * 32) * 56 // default value: 896KiB (56 * 16KiB)
 		} else {
 			ContinuousBytesThreshold = threshold
 		}
 	}
-} // 4MiB
+} // default threshold initialization
 
 func watchKmsg(messages chan<- string, kmsgPath string) {
 	// FIXME: sleepでpollingしない
