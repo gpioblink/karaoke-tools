@@ -7,6 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"os"
+
 	"gpioblink.com/x/karaoke-demon/application"
 	"gpioblink.com/x/karaoke-demon/application/eventbus"
 	"gpioblink.com/x/karaoke-demon/application/orchestrator"
@@ -17,6 +22,7 @@ import (
 	resInfra "gpioblink.com/x/karaoke-demon/infrastructure/reservation"
 	slotInfra "gpioblink.com/x/karaoke-demon/infrastructure/slot"
 	songInfra "gpioblink.com/x/karaoke-demon/infrastructure/song"
+	videoInfra "gpioblink.com/x/karaoke-demon/infrastructure/video"
 )
 
 type fakeVideoRepo struct{}
@@ -34,6 +40,9 @@ func (f fakeVideoRepo) GetRandomDummyVideo() (*domainVideo.Video, error) {
 		return nil, err
 	}
 	return domainVideo.NewVideo(sg, "dummy.mp4")
+}
+func (f fakeVideoRepo) FindLocalFilesByRequestNo(requestNo string) ([]string, error) {
+	return []string{requestNo + ".mp4"}, nil
 }
 
 // ダウンロード可否を制御できるテスト用ビデオリポジトリ
@@ -63,6 +72,12 @@ func (f *downloadGateVideoRepo) GetRandomDummyVideo() (*domainVideo.Video, error
 		return nil, err
 	}
 	return domainVideo.NewVideo(sg, "dummy.mp4")
+}
+func (f *downloadGateVideoRepo) FindLocalFilesByRequestNo(requestNo string) ([]string, error) {
+	if f.available[requestNo] {
+		return []string{requestNo + ".mp4"}, nil
+	}
+	return []string{}, nil
 }
 
 // スロット状態の遷移履歴を記録するラッパ
@@ -763,4 +778,120 @@ func containsOrder(history []slot.State, seq []slot.State) bool {
 		}
 	}
 	return false
+}
+
+func TestReservationCreated_WithURL_WaitsUntilDownloaded(t *testing.T) {
+	songRepo := songInfra.NewMemoryRepository()
+	videoRepo := newDownloadGateVideoRepo()
+	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	base := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
+
+	bus := eventbus.NewInMemoryEventBus()
+	service := application.NewMusicService(reservationRepo, base, videoRepo, bus)
+	deps := orchestrator.Dependencies{Bus: bus, ReservationRepo: reservationRepo, SlotRepo: base, VideoRepo: videoRepo, DownloadDir: "/tmp"}
+	_ = orchestrator.New(deps)
+
+	// URL付きで予約（ダウンロード可能になるまでSetされない）
+	_ = service.ReserveSongWithVideo(domainSong.RequestNo("777777"), &application.VideoInfo{Type: "download", Filename: "777777-title.mp4", URL: "http://example.test/777777.mp4"})
+	// すぐにはセットされない
+	time.Sleep(5 * time.Millisecond)
+	s0, _ := deps.SlotRepo.FindById(0)
+	if s0.State() != slot.Available {
+		t.Fatalf("slot should remain available until download, got %s", s0.State())
+	}
+
+	// ダウンロード完了を通知（テスト用ビデオリポジトリに可用化）
+	videoRepo.MakeAvailable("777777")
+	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: 0, LocalPath: filepath.Join("/tmp", "777777-title.mp4")})
+	bus.Wait()
+
+	s0, _ = deps.SlotRepo.FindById(0)
+	if s0.State() != slot.Set {
+		t.Fatalf("slot should be set after download, got %s", s0.State())
+	}
+}
+
+func TestDownloadIntegration_WithThrottledHTTP10MB(t *testing.T) {
+	// テンポラリな動画ディレクトリとダミー動画を用意
+	tmpDir := t.TempDir()
+	dummyPath := filepath.Join(tmpDir, "dummy.mp4")
+	if err := os.WriteFile(dummyPath, []byte("dummy"), 0644); err != nil {
+		t.Fatalf("write dummy: %v", err)
+	}
+
+	// 10MBを帯域制限付きで返すハンドラ
+	const totalBytes = 10 * 1024 * 1024
+	const chunkSize = 64 * 1024        // 64KB/チャンク
+	rateBytesPerSec := 5 * 1024 * 1024 // 約5MB/s
+	intervalPerChunk := time.Duration(int64(time.Second) * int64(chunkSize) / int64(rateBytesPerSec))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "video/mp4")
+		written := 0
+		buf := bytes.Repeat([]byte{'A'}, chunkSize)
+		for written < totalBytes {
+			n := chunkSize
+			if totalBytes-written < chunkSize {
+				n = totalBytes - written
+			}
+			if _, err := w.Write(buf[:n]); err != nil {
+				return
+			}
+			written += n
+			time.Sleep(intervalPerChunk)
+		}
+	}))
+	defer ts.Close()
+
+	// 実配線（ストレージビデオリポジトリでダウンロード結果を検出）
+	songRepo := songInfra.NewMemoryRepository()
+	videoRepo := videoInfra.NewStorageRepository(tmpDir, dummyPath)
+	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	slotRepo := slotInfra.NewMemoryRepository(dummyPath)
+
+	bus := eventbus.NewInMemoryEventBus()
+	service := application.NewMusicService(reservationRepo, slotRepo, videoRepo, bus)
+	deps := orchestrator.Dependencies{Bus: bus, ReservationRepo: reservationRepo, SlotRepo: slotRepo, VideoRepo: videoRepo, DownloadDir: tmpDir}
+	_ = orchestrator.New(deps)
+
+	// URL付き予約を投げる
+	reqNo := domainSong.RequestNo("123456")
+	filename := "123456-title.mp4"
+	url := ts.URL + "/video.mp4"
+	if err := service.ReserveSongWithVideo(reqNo, &application.VideoInfo{Type: "download", Filename: filename, URL: url}); err != nil {
+		t.Fatalf("reserve with video: %v", err)
+	}
+
+	// 直後はAvailableのまま（DL待ち）である可能性が高い
+	s0, _ := deps.SlotRepo.FindById(0)
+	if s0.State() != slot.Available && s0.State() != slot.Set { // 環境によっては即時完了する可能性もあるため許容
+		t.Fatalf("unexpected initial slot0 state: %s", s0.State())
+	}
+
+	// 完了まで待ち、Setになることを確認
+	deadline := time.Now().Add(8 * time.Second)
+	for {
+		s0, _ = deps.SlotRepo.FindById(0)
+		if s0.State() == slot.Set {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timeout waiting for slot0 Set, last state=%s", s0.State())
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	// 保存先ファイルが存在し、スロットにその動画が紐づいている
+	saved := filepath.Join(tmpDir, filename)
+	if _, err := os.Stat(saved); err != nil {
+		t.Fatalf("downloaded file not found: %v", err)
+	}
+	if s0.Video() == nil || s0.Video().Location() != saved {
+		t.Fatalf("slot video location mismatch: got %v want %v", func() string {
+			if s0.Video() != nil {
+				return s0.Video().Location()
+			}
+			return "<nil>"
+		}(), saved)
+	}
 }

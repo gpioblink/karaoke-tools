@@ -48,10 +48,7 @@ func (e SlotAvailableAppeared) Name() string { return EventSlotAvailableAppeared
 // VideoURLReceived はWebhook等で動画URLが届いた
 type VideoURLReceived struct {
 	ReservationID int
-	SongID        string
 	VideoURL      string
-	VideoTitle    string
-	ForceOverride bool
 }
 
 func (e VideoURLReceived) Name() string { return EventVideoURLReceived }

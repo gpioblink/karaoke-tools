@@ -1,35 +1,78 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"gpioblink.com/x/karaoke-demon/application"
-	"gpioblink.com/x/karaoke-demon/interface/handler"
+	"gpioblink.com/x/karaoke-demon/domain/song"
 )
 
 type HttpInterface struct {
-	router       map[string]handler.HandlerFunc
 	musicService application.MusicService
 	server       *http.Server
 }
 
-type WebhookRequest struct {
-	RequestNo string `json:"request_no"`
+// 予約リクエスト用の構造体
+type ReservationRequest struct {
+	SongID        string `json:"song_id"`
+	VideoType     string `json:"video_type"`
+	VideoFilename string `json:"video_filename"`
+	VideoURL      string `json:"video_url,omitempty"`
 }
 
-var DefaultRouter = map[string]handler.HandlerFunc{
-	"reserve": handler.ReserveSongWebhook,
+// 予約レスポンス用の構造体
+type ReservationResponse struct {
+	Status string `json:"status"`
 }
 
-func NewHttpInterface(service *application.MusicService, router map[string]handler.HandlerFunc) *HttpInterface {
+// 予約一覧レスポンス用の構造体
+type ReservationListResponse struct {
+	Reservations []ReservationInfo `json:"reservations"`
+	Length       int               `json:"length"`
+	Status       string            `json:"status"`
+}
+
+type ReservationInfo struct {
+	ID      int         `json:"id"`
+	SongID  string      `json:"song_id"`
+	Video   VideoInfo   `json:"video"`
+	Slot    SlotInfo    `json:"slot"`
+	Karaoke KaraokeInfo `json:"karaoke"`
+}
+
+type VideoInfo struct {
+	DownloadStatus string `json:"download_status"`
+	VideoStatus    string `json:"video_status"`
+	VideoFileName  string `json:"video_FileName"`
+}
+
+type SlotInfo struct {
+	SlotStatus string `json:"slot_status"`
+	Slot       int    `json:"slot"`
+}
+
+type KaraokeInfo struct {
+	KaraokeStatus string `json:"karaoke_status"`
+}
+
+// ローカルファイルレスポンス用の構造体
+type LocalFilesResponse struct {
+	Files  []FileInfo `json:"files"`
+	Length int        `json:"length"`
+	Status string     `json:"status"`
+}
+
+type FileInfo struct {
+	Name string `json:"name"`
+}
+
+func NewHttpInterface(service *application.MusicService) *HttpInterface {
 	mux := http.NewServeMux()
 
 	httpInterface := &HttpInterface{
-		router:       router,
 		musicService: *service,
 		server: &http.Server{
 			Addr:    ":8787",
@@ -37,8 +80,9 @@ func NewHttpInterface(service *application.MusicService, router map[string]handl
 		},
 	}
 
-	// webhook endpoint
-	mux.HandleFunc("/webhook/reserve", httpInterface.handleReserveWebhook)
+	// API endpoints
+	mux.HandleFunc("/reservation", httpInterface.handleReservation)
+	mux.HandleFunc("/local-files", httpInterface.handleLocalFiles)
 
 	return httpInterface
 }
@@ -60,41 +104,194 @@ func corsMiddleware(handler http.Handler) http.Handler {
 	})
 }
 
-func (h *HttpInterface) handleReserveWebhook(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+func (h *HttpInterface) handleReservation(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
-	var req WebhookRequest
+	switch r.Method {
+	case http.MethodPost:
+		h.handlePostReservation(w, r)
+	case http.MethodGet:
+		h.handleGetReservation(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *HttpInterface) handlePostReservation(w http.ResponseWriter, r *http.Request) {
+	var req ReservationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("failed to decode webhook request: %v", err)
+		log.Printf("failed to decode reservation request: %v", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	if req.RequestNo == "" {
-		http.Error(w, "request_no is required", http.StatusBadRequest)
+	// バリデーション
+	if req.SongID == "" {
+		http.Error(w, "song_id is required", http.StatusBadRequest)
+		return
+	}
+	if req.VideoType == "" {
+		http.Error(w, "video_type is required", http.StatusBadRequest)
+		return
+	}
+	if req.VideoFilename == "" {
+		http.Error(w, "video_filename is required", http.StatusBadRequest)
 		return
 	}
 
-	// Call the handler
-	ctx := context.Background()
-	handlerReq := handler.NewRequest("reserve", []string{req.RequestNo})
-
-	if handlerFunc, ok := h.router["reserve"]; ok {
-		handlerFunc(ctx, h.musicService, *handlerReq)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "success",
-			"message": fmt.Sprintf("Song %s reserved successfully", req.RequestNo),
-		})
-	} else {
-		log.Printf("Handler not found for reserve action")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	// 選曲番号の形式チェック（6桁の数字）
+	if len(req.SongID) != 6 {
+		http.Error(w, "song_id must be 6 digits", http.StatusBadRequest)
+		return
 	}
+	if _, err := strconv.Atoi(req.SongID); err != nil {
+		http.Error(w, "song_id must be numeric", http.StatusBadRequest)
+		return
+	}
+
+	// ビデオタイプのバリデーション
+	if req.VideoType != "local" && req.VideoType != "download" {
+		http.Error(w, "video_type must be 'local' or 'download'", http.StatusBadRequest)
+		return
+	}
+
+	// ダウンロードタイプの場合、URLが必要
+	if req.VideoType == "download" && req.VideoURL == "" {
+		http.Error(w, "video_url is required for download type", http.StatusBadRequest)
+		return
+	}
+
+	// ビデオ情報を作成
+	videoInfo := &application.VideoInfo{
+		Type:     req.VideoType,
+		Filename: req.VideoFilename,
+		URL:      req.VideoURL,
+	}
+
+	// ビデオ情報付きで予約処理
+	err := h.musicService.ReserveSongWithVideo(song.RequestNo(req.SongID), videoInfo)
+	if err != nil {
+		log.Printf("failed to reserve song with video: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	response := ReservationResponse{Status: "ok"}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *HttpInterface) handleGetReservation(w http.ResponseWriter, r *http.Request) {
+	reservations, slots, err := h.musicService.GetReservationWithSlotInfo()
+	if err != nil {
+		log.Printf("failed to get reservations with slot info: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// レスポンス用のデータ構造に変換
+	reservationInfos := make([]ReservationInfo, 0, len(reservations))
+	for _, res := range reservations {
+		song, err := res.Song()
+		if err != nil {
+			log.Printf("failed to get song info: %v", err)
+			continue
+		}
+
+		info := ReservationInfo{
+			ID:     int(res.Seq()),
+			SongID: string(song.RequestNo()),
+			Video: VideoInfo{
+				DownloadStatus: "none",
+				VideoStatus:    "none",
+				VideoFileName:  "",
+			},
+			Slot: SlotInfo{
+				SlotStatus: "waiting",
+				Slot:       0,
+			},
+			Karaoke: KaraokeInfo{
+				KaraokeStatus: "wait",
+			},
+		}
+
+		// 予約の状態をそのまま使用
+		info.Video.DownloadStatus = string(res.State())
+
+		// スロット情報を検索して設定
+		for _, slot := range slots {
+			if slot.Reservation() != nil && slot.Reservation().Seq() == res.Seq() {
+				info.Slot.Slot = slot.Id()
+				// スロットの状態をそのまま使用
+				info.Slot.SlotStatus = string(slot.State())
+
+				// VideoStatusにはvideo.goで定義されているStateをそのまま使用
+				if slot.Video() != nil {
+					info.Video.VideoStatus = string(slot.Video().State())
+					info.Video.VideoFileName = slot.Video().Location()
+				}
+
+				// KaraokeStatusにはreservation.goで定義されているStateをそのまま使用
+				info.Karaoke.KaraokeStatus = string(res.State())
+				break
+			}
+		}
+
+		reservationInfos = append(reservationInfos, info)
+	}
+
+	response := ReservationListResponse{
+		Reservations: reservationInfos,
+		Length:       len(reservationInfos),
+		Status:       "success",
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *HttpInterface) handleLocalFiles(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	songID := r.URL.Query().Get("song_id")
+	if songID == "" {
+		http.Error(w, "song_id parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	// 選曲番号の形式チェック（6桁の数字）
+	if len(songID) != 6 {
+		http.Error(w, "song_id must be 6 digits", http.StatusBadRequest)
+		return
+	}
+	if _, err := strconv.Atoi(songID); err != nil {
+		http.Error(w, "song_id must be numeric", http.StatusBadRequest)
+		return
+	}
+
+	// application層の機能を使用してローカルファイルを検索
+	filenames, err := h.musicService.FindLocalFilesByRequestNo(songID)
+	if err != nil {
+		log.Printf("failed to find local files: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// ファイル名をFileInfo構造体に変換
+	files := make([]FileInfo, len(filenames))
+	for i, filename := range filenames {
+		files[i] = FileInfo{Name: filename}
+	}
+
+	response := LocalFilesResponse{
+		Files:  files,
+		Length: len(files),
+		Status: "success",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *HttpInterface) Run() error {

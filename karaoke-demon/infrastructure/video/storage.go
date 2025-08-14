@@ -58,6 +58,25 @@ func (s *StorageRepository) GetRandomDummyVideo() (*video.Video, error) {
 	return video.NewVideo(song, filePath)
 }
 
+func (s *StorageRepository) FindLocalFilesByRequestNo(requestNo string) ([]string, error) {
+	// ディレクトリ内のファイルを取得
+	files, err := os.ReadDir(s.basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var matchingFiles []string
+	// ファイル名がrequestNoから始まるファイルを探す
+	for _, entry := range files {
+		if !entry.IsDir() && strings.HasPrefix(entry.Name(), requestNo) {
+			// ファイル名のみを返す（パスは含まない）
+			matchingFiles = append(matchingFiles, entry.Name())
+		}
+	}
+
+	return matchingFiles, nil
+}
+
 func findFileWithPrefix(dir string, prefix string) (string, error) {
 	// ディレクトリ内のファイルを取得
 	files, err := os.ReadDir(dir)

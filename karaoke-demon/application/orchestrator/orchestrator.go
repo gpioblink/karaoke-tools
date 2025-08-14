@@ -2,7 +2,13 @@ package orchestrator
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"gpioblink.com/x/karaoke-demon/application/eventbus"
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
@@ -15,6 +21,7 @@ type Dependencies struct {
 	ReservationRepo reservation.Repository
 	SlotRepo        slot.Repository
 	VideoRepo       video.Repository
+	DownloadDir     string
 }
 
 type Orchestrator struct {
@@ -39,6 +46,24 @@ func (o *Orchestrator) wire() {
 		if err := o.d.ReservationRepo.EnQueue(v.SongID); err != nil {
 			log.Printf("enqueue error: %v", err)
 		}
+		// URL付きならダウンロード完了後に割当。URLが無ければ即割当。
+		if strings.TrimSpace(v.WithVideoURL) != "" {
+			go func(url, title string) {
+				// 保存先ファイル名: 指定タイトルがあればそれを使用。無ければSongID.mp4
+				fileName := title
+				if strings.TrimSpace(fileName) == "" {
+					fileName = v.SongID + ".mp4"
+				}
+				target := filepath.Join(o.d.DownloadDir, fileName)
+				if err := downloadFile(ctx, url, target); err != nil {
+					log.Printf("video download failed: %v", err)
+					return
+				}
+				// ダウンロード完了を通知
+				o.d.Bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: -1, LocalPath: target})
+			}(v.WithVideoURL, v.VideoTitle)
+			return
+		}
 		o.attachNext()
 	})
 
@@ -61,7 +86,7 @@ func (o *Orchestrator) wire() {
 		o.attachNext()
 	})
 
-	// 動画ダウンロード完了（将来用）
+	// 動画ダウンロード完了
 	o.d.Bus.Subscribe(eventbus.EventVideoDownloaded, func(ctx context.Context, e eventbus.Event) {
 		// 予約キュー -> スロット割り当ては attachNext に集約
 		o.attachNext()
@@ -123,3 +148,31 @@ func (o *Orchestrator) attachNext() {
 }
 
 func calcPositiveModulo(a, b int) int { return (a%b + b) % b }
+
+func downloadFile(ctx context.Context, url string, dest string) error {
+	// 親ディレクトリ作成
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
+	}
+	// GET
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("download failed: status %s", resp.Status)
+	}
+	// 書き出し
+	f, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.Copy(f, resp.Body)
+	return err
+}

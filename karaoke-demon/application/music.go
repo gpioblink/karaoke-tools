@@ -18,6 +18,13 @@ type MusicModel interface {
 	ListReservations() ([]reservation.Reservation, error)
 }
 
+// VideoInfo は予約時のビデオ情報を表します
+type VideoInfo struct {
+	Type     string // "local" または "download"
+	Filename string
+	URL      string // ダウンロードの場合のみ
+}
+
 type MusicService struct {
 	reservationRepo reservation.Repository
 	slotRepo        slot.Repository
@@ -37,6 +44,35 @@ func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repos
 func (s *MusicService) ReserveSong(requestNo song.RequestNo) error {
 	// 予約イベントを投げ、オーケストレータに処理させる
 	s.bus.Publish(context.Background(), eventbus.ReservationCreated{SongID: string(requestNo)})
+	return nil
+}
+
+// ReserveSongWithVideo はビデオ情報付きで予約を作成します
+func (s *MusicService) ReserveSongWithVideo(requestNo song.RequestNo, videoInfo *VideoInfo) error {
+	if videoInfo == nil {
+		// ビデオ情報がない場合は通常の予約
+		return s.ReserveSong(requestNo)
+	}
+
+	// ビデオ情報付きの予約イベントを発行
+	event := eventbus.ReservationCreated{
+		SongID: string(requestNo),
+	}
+
+	switch videoInfo.Type {
+	case "local":
+		// ローカルファイルの場合
+		event.VideoTitle = videoInfo.Filename
+		event.WithVideoURL = "" // ローカルファイルなのでURLは空
+	case "download":
+		// ダウンロードの場合
+		event.VideoTitle = videoInfo.Filename
+		event.WithVideoURL = videoInfo.URL
+	default:
+		return fmt.Errorf("unsupported video type: %s", videoInfo.Type)
+	}
+
+	s.bus.Publish(context.Background(), event)
 	return nil
 }
 
@@ -110,6 +146,28 @@ func (s *MusicService) ListSlots() ([]*slot.Slot, error) {
 		return nil, err
 	}
 	return slots, nil
+}
+
+func (s *MusicService) FindLocalFilesByRequestNo(requestNo string) ([]string, error) {
+	files, err := s.videoRepo.FindLocalFilesByRequestNo(requestNo)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+func (s *MusicService) GetReservationWithSlotInfo() ([]*reservation.Reservation, []*slot.Slot, error) {
+	reservations, err := s.reservationRepo.List()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	slots, err := s.slotRepo.List()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return reservations, slots, nil
 }
 
 func calcPositiveModulo(a, b int) int {

@@ -14,7 +14,7 @@ import (
 	"gpioblink.com/x/karaoke-demon/infrastructure/video"
 	"gpioblink.com/x/karaoke-demon/interface/ble"
 	"gpioblink.com/x/karaoke-demon/interface/fifo"
-	"gpioblink.com/x/karaoke-demon/interface/http"
+	httpiface "gpioblink.com/x/karaoke-demon/interface/http"
 )
 
 func main() {
@@ -45,6 +45,7 @@ func main() {
 		ReservationRepo: reservationRepository,
 		SlotRepo:        slotRepository,
 		VideoRepo:       videoRepository,
+		DownloadDir:     conf.VIDEO_DIR,
 	})
 
 	log.Println("Starting FIFO interface...")
@@ -62,7 +63,7 @@ func main() {
 	go bleInterface.Run()
 
 	log.Println("Starting HTTP webhook interface...")
-	httpInterface := http.NewHttpInterface(musicService, http.DefaultRouter)
+	httpInterface := httpiface.NewHttpInterface(musicService)
 
 	go httpInterface.Run()
 
