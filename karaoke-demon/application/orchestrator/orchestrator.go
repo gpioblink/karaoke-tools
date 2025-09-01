@@ -70,6 +70,11 @@ func (o *Orchestrator) wire() {
 				target := filepath.Join(o.d.DownloadDir, fileName)
 				if err := downloadFile(ctx, url, target); err != nil {
 					log.Printf("video download failed: %v", err)
+					// ダウンロード失敗を通知
+					o.d.Bus.Publish(context.Background(), eventbus.VideoDownloadFailed{
+						ReservationSeq: seq,
+						ErrorMessage:   err.Error(),
+					})
 					return
 				}
 				// ダウンロード完了を通知
@@ -116,6 +121,18 @@ func (o *Orchestrator) wire() {
 		vid.SetState(video.Ready)
 		// 予約キュー -> スロット割り当ては attachNext に集約
 		o.attachNext()
+	})
+
+	// 動画ダウンロード失敗
+	o.d.Bus.Subscribe(eventbus.EventVideoDownloadFailed, func(ctx context.Context, e eventbus.Event) {
+		v := e.(eventbus.VideoDownloadFailed)
+		log.Printf("video download failed for reservation %d: %s", v.ReservationSeq, v.ErrorMessage)
+		// 失敗した予約を削除
+		if err := o.d.ReservationRepo.RemoveBySeq(v.ReservationSeq); err != nil {
+			log.Printf("failed to remove reservation %d: %v", v.ReservationSeq, err)
+		} else {
+			log.Printf("removed failed reservation %d", v.ReservationSeq)
+		}
 	})
 }
 

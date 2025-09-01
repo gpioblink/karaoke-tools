@@ -8,6 +8,7 @@ const (
 	EventSlotAvailableAppeared = "slot.available.appeared"
 	EventVideoURLReceived      = "video.url.received"
 	EventVideoDownloaded       = "video.downloaded"
+	EventVideoDownloadFailed   = "video.download.failed"
 	EventVideoAttachedToSlot   = "video.attached"
 	EventKaraokeStarted        = "karaoke.started"
 	EventKaraokeFinished       = "karaoke.finished"
@@ -60,6 +61,14 @@ type VideoDownloaded struct {
 }
 
 func (e VideoDownloaded) Name() string { return EventVideoDownloaded }
+
+// VideoDownloadFailed は動画のダウンロード失敗
+type VideoDownloadFailed struct {
+	ReservationSeq int
+	ErrorMessage   string
+}
+
+func (e VideoDownloadFailed) Name() string { return EventVideoDownloadFailed }
 
 // VideoAttachedToSlot はスロットに動画が差し替えられた
 type VideoAttachedToSlot struct {
