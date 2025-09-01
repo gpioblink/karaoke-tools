@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gpioblink.com/x/karaoke-demon/domain/song"
+	"gpioblink.com/x/karaoke-demon/domain/video"
 )
 
 var (
@@ -23,29 +24,30 @@ const (
 
 type Reservation struct {
 	seq   SeqNum
-	song  *song.Song
+	video *video.Video
 	state State
 }
 
 func (r *Reservation) Seq() SeqNum { return r.seq }
 
-func (r *Reservation) Song() (*song.Song, error) {
-	if r.song == nil {
-		return nil, ErrReservationSongEmpty
+func (r *Reservation) Song() (song.Song, error) {
+	if r.video == nil {
+		return song.Song{}, ErrReservationSongEmpty
 	}
-	return r.song, nil
+	return r.video.Song(), nil
 }
 
 func (r *Reservation) State() State { return r.state }
 
 func (r *Reservation) SetState(s State) { r.state = s }
 
-func NewReservation(seq SeqNum, song *song.Song) (*Reservation, error) {
+func NewReservation(seq SeqNum, video *video.Video) (*Reservation, error) {
 	if seq < 0 {
 		return nil, ErrReservationSeqEmpty
 	}
-	if song == nil {
+
+	if video == nil {
 		return nil, ErrReservationSongEmpty
 	}
-	return &Reservation{seq: seq, song: song, state: PreparingVideo}, nil
+	return &Reservation{seq: seq, video: video, state: PreparingVideo}, nil
 }
