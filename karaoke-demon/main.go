@@ -18,7 +18,9 @@ import (
 
 // pre-commitフックで設定される変数
 var (
-	Commit = "eea9209"
+	Commit       = "unknown"
+	CommitDate   = "unknown"
+	CommitAuthor = "gpioblink"
 )
 
 func main() {
@@ -67,7 +69,7 @@ func main() {
 	go bleInterface.Run()
 
 	log.Println("Starting HTTP webhook interface...")
-	httpInterface := httpiface.NewHttpInterface(musicService, Commit)
+	httpInterface := httpiface.NewHttpInterface(musicService, Commit, CommitDate, CommitAuthor)
 
 	go httpInterface.Run()
 

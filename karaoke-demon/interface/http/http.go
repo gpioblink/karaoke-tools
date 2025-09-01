@@ -14,6 +14,8 @@ type HttpInterface struct {
 	musicService application.MusicService
 	server       *http.Server
 	commit       string
+	commitDate   string
+	commitAuthor string
 }
 
 // 予約リクエスト用の構造体
@@ -72,16 +74,20 @@ type FileInfo struct {
 
 // バージョン情報レスポンス用の構造体
 type VersionResponse struct {
-	Commit string `json:"commit"`
-	Status string `json:"status"`
+	Commit       string `json:"commit"`
+	CommitDate   string `json:"commit_date"`
+	CommitAuthor string `json:"commit_author"`
+	Status       string `json:"status"`
 }
 
-func NewHttpInterface(service *application.MusicService, commit string) *HttpInterface {
+func NewHttpInterface(service *application.MusicService, commit, commitDate, commitAuthor string) *HttpInterface {
 	mux := http.NewServeMux()
 
 	httpInterface := &HttpInterface{
 		musicService: *service,
 		commit:       commit,
+		commitDate:   commitDate,
+		commitAuthor: commitAuthor,
 		server: &http.Server{
 			Addr:    ":8787",
 			Handler: corsMiddleware(mux),
@@ -200,26 +206,23 @@ func (h *HttpInterface) handleGetReservation(w http.ResponseWriter, r *http.Requ
 	// レスポンス用のデータ構造に変換
 	reservationInfos := make([]ReservationInfo, 0, len(reservations))
 	for _, res := range reservations {
-		song, err := res.Song()
-		if err != nil {
-			log.Printf("failed to get song info: %v", err)
-			continue
-		}
+		vid := res.Video()
+		so := vid.Song()
 
 		info := ReservationInfo{
 			ID:     int(res.Seq()),
-			SongID: string(song.RequestNo()),
+			SongID: string(so.RequestNo()),
 			Video: VideoInfo{
-				DownloadStatus: "none",
-				VideoStatus:    "none",
-				VideoFileName:  "",
+				DownloadStatus: string(vid.State()), // TODO: ダウンロード中の詳細状態を取得する
+				VideoStatus:    string(vid.State()),
+				VideoFileName:  string(vid.Location()),
 			},
 			Slot: SlotInfo{
-				SlotStatus: "waiting",
-				Slot:       0,
+				SlotStatus: "nodata",
+				Slot:       -1,
 			},
 			Karaoke: KaraokeInfo{
-				KaraokeStatus: "wait",
+				KaraokeStatus: string(res.State()),
 			},
 		}
 
@@ -233,14 +236,13 @@ func (h *HttpInterface) handleGetReservation(w http.ResponseWriter, r *http.Requ
 				// スロットの状態をそのまま使用
 				info.Slot.SlotStatus = string(slot.State())
 
-				// VideoStatusにはvideo.goで定義されているStateをそのまま使用
-				if slot.Video() != nil {
-					info.Video.VideoStatus = string(slot.Video().State())
-					info.Video.VideoFileName = slot.Video().Location()
-				}
+				// ↓ videoはreservationの中に入っているので、ここでは取得しない
+				// // VideoStatusにはvideo.goで定義されているStateをそのまま使用
+				// if slot.Video() != nil {
+				// 	info.Video.VideoStatus = string(slot.Video().State())
+				// 	info.Video.VideoFileName = slot.Video().Location()
+				// }
 
-				// KaraokeStatusにはreservation.goで定義されているStateをそのまま使用
-				info.Karaoke.KaraokeStatus = string(res.State())
 				break
 			}
 		}
@@ -310,8 +312,10 @@ func (h *HttpInterface) handleVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := VersionResponse{
-		Commit: h.commit,
-		Status: "success",
+		Commit:       h.commit,
+		CommitDate:   h.commitDate,
+		CommitAuthor: h.commitAuthor,
+		Status:       "success",
 	}
 
 	w.Header().Set("Content-Type", "application/json")

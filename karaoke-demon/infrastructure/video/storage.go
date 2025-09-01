@@ -77,6 +77,10 @@ func (s *StorageRepository) FindLocalFilesByRequestNo(requestNo string) ([]strin
 	return matchingFiles, nil
 }
 
+func (s *StorageRepository) GetVideoDir() string {
+	return s.basePath
+}
+
 func findFileWithPrefix(dir string, prefix string) (string, error) {
 	// ディレクトリ内のファイルを取得
 	files, err := os.ReadDir(dir)

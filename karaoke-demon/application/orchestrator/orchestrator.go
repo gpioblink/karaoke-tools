@@ -193,6 +193,12 @@ func (o *Orchestrator) attachNext() {
 func calcPositiveModulo(a, b int) int { return (a%b + b) % b }
 
 func downloadFile(ctx context.Context, url string, dest string) error {
+	// ファイルが既に存在する場合はスキップ
+	if _, err := os.Stat(dest); err == nil {
+		log.Printf("file already exists, skipping download: %s", dest)
+		return nil
+	}
+
 	// 親ディレクトリ作成
 	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return err

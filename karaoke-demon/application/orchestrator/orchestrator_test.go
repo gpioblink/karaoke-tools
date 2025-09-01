@@ -43,6 +43,9 @@ func (f fakeVideoRepo) GetRandomDummyVideo() (*domainVideo.Video, error) {
 func (f fakeVideoRepo) FindLocalFilesByRequestNo(requestNo string) ([]string, error) {
 	return []string{requestNo + ".mp4"}, nil
 }
+func (f fakeVideoRepo) GetVideoDir() string {
+	return "/tmp"
+}
 
 // ダウンロード可否を制御できるテスト用ビデオリポジトリ
 // 初期状態では全て未ダウンロード（Findはエラー）。MakeAvailable後に取得可能になる
@@ -77,6 +80,9 @@ func (f *downloadGateVideoRepo) FindLocalFilesByRequestNo(requestNo string) ([]s
 		return []string{requestNo + ".mp4"}, nil
 	}
 	return []string{}, nil
+}
+func (f *downloadGateVideoRepo) GetVideoDir() string {
+	return "/tmp"
 }
 
 // スロット状態の遷移履歴を記録するラッパ
