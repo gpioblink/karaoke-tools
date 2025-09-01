@@ -2,6 +2,8 @@ package eventbus
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"sync"
 )
 
@@ -42,6 +44,14 @@ func NewInMemoryEventBus() *InMemoryEventBus {
 }
 
 func (b *InMemoryEventBus) Publish(ctx context.Context, e Event) {
+	// イベント発火時のログ出力
+	eventData, err := json.Marshal(e)
+	if err != nil {
+		fmt.Printf("[EventBus] イベント発火: %s (JSON化エラー: %v)\n", e.Name(), err)
+	} else {
+		fmt.Printf("[EventBus] イベント発火: %s, 引数: %s\n", e.Name(), string(eventData))
+	}
+
 	b.mu.RLock()
 	hs := append([]Handler(nil), b.handlers[e.Name()]...)
 	b.mu.RUnlock()
