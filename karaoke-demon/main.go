@@ -16,6 +16,11 @@ import (
 	httpiface "gpioblink.com/x/karaoke-demon/interface/http"
 )
 
+// ビルド時に設定される変数
+var (
+	Commit = "unknown"
+)
+
 func main() {
 	conf, err := config.NewConfig()
 	if err != nil {
@@ -62,7 +67,7 @@ func main() {
 	go bleInterface.Run()
 
 	log.Println("Starting HTTP webhook interface...")
-	httpInterface := httpiface.NewHttpInterface(musicService)
+	httpInterface := httpiface.NewHttpInterface(musicService, Commit)
 
 	go httpInterface.Run()
 

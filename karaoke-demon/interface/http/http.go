@@ -13,6 +13,7 @@ import (
 type HttpInterface struct {
 	musicService application.MusicService
 	server       *http.Server
+	commit       string
 }
 
 // 予約リクエスト用の構造体
@@ -69,11 +70,18 @@ type FileInfo struct {
 	Name string `json:"name"`
 }
 
-func NewHttpInterface(service *application.MusicService) *HttpInterface {
+// バージョン情報レスポンス用の構造体
+type VersionResponse struct {
+	Commit string `json:"commit"`
+	Status string `json:"status"`
+}
+
+func NewHttpInterface(service *application.MusicService, commit string) *HttpInterface {
 	mux := http.NewServeMux()
 
 	httpInterface := &HttpInterface{
 		musicService: *service,
+		commit:       commit,
 		server: &http.Server{
 			Addr:    ":8787",
 			Handler: corsMiddleware(mux),
@@ -83,6 +91,7 @@ func NewHttpInterface(service *application.MusicService) *HttpInterface {
 	// API endpoints
 	mux.HandleFunc("/reservation", httpInterface.handleReservation)
 	mux.HandleFunc("/local-files", httpInterface.handleLocalFiles)
+	mux.HandleFunc("/version", httpInterface.handleVersion)
 
 	return httpInterface
 }
@@ -287,6 +296,21 @@ func (h *HttpInterface) handleLocalFiles(w http.ResponseWriter, r *http.Request)
 	response := LocalFilesResponse{
 		Files:  files,
 		Length: len(files),
+		Status: "success",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *HttpInterface) handleVersion(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	response := VersionResponse{
+		Commit: h.commit,
 		Status: "success",
 	}
 
