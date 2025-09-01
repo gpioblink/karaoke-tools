@@ -13,9 +13,9 @@ import (
 type HttpInterface struct {
 	musicService application.MusicService
 	server       *http.Server
-	commit       string
-	commitDate   string
-	commitAuthor string
+	version      string
+	buildDate    string
+	buildUser    string
 }
 
 // 予約リクエスト用の構造体
@@ -74,20 +74,20 @@ type FileInfo struct {
 
 // バージョン情報レスポンス用の構造体
 type VersionResponse struct {
-	Commit       string `json:"commit"`
-	CommitDate   string `json:"commit_date"`
-	CommitAuthor string `json:"commit_author"`
-	Status       string `json:"status"`
+	Version   string `json:"version"`
+	BuildDate string `json:"build_date"`
+	BuildUser string `json:"build_user"`
+	Status    string `json:"status"`
 }
 
-func NewHttpInterface(service *application.MusicService, commit, commitDate, commitAuthor string) *HttpInterface {
+func NewHttpInterface(service *application.MusicService, version, buildDate, buildUser string) *HttpInterface {
 	mux := http.NewServeMux()
 
 	httpInterface := &HttpInterface{
 		musicService: *service,
-		commit:       commit,
-		commitDate:   commitDate,
-		commitAuthor: commitAuthor,
+		version:      version,
+		buildDate:    buildDate,
+		buildUser:    buildUser,
 		server: &http.Server{
 			Addr:    ":8787",
 			Handler: corsMiddleware(mux),
@@ -312,10 +312,10 @@ func (h *HttpInterface) handleVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := VersionResponse{
-		Commit:       h.commit,
-		CommitDate:   h.commitDate,
-		CommitAuthor: h.commitAuthor,
-		Status:       "success",
+		Version:   h.version,
+		BuildDate: h.buildDate,
+		BuildUser: h.buildUser,
+		Status:    "success",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
