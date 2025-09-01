@@ -3,6 +3,7 @@ package video
 import "errors"
 
 var ErrVideoEmpty = errors.New("no such video")
+var ErrUrlInvalid = errors.New("url is invalid")
 
 type Repository interface {
 	FindByRequestNo(requestNo string) (*Video, error)
