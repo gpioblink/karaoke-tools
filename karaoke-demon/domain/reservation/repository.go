@@ -1,11 +1,15 @@
 package reservation
 
-import "errors"
+import (
+	"errors"
+
+	"gpioblink.com/x/karaoke-demon/domain/video"
+)
 
 var ErrNotFound = errors.New("reservation not found")
 
 type Repository interface {
-	EnQueue(requestNo string) error
+	EnQueue(video *video.Video) (seq int, err error)
 	DeQueue() (*Reservation, error)
 	FindBySeq(seq int) (*Reservation, error)
 	FindByQueueIndex(index int) (*Reservation, error)

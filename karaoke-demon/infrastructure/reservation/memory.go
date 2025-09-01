@@ -21,19 +21,19 @@ func NewMemoryRepository() *MemoryRepository {
 	}
 }
 
-func (m *MemoryRepository) EnQueue(video *video.Video) error {
+func (m *MemoryRepository) EnQueue(video *video.Video) (int, error) {
 	if video == nil {
-		return ErrVideoEmpty
+		return -1, ErrVideoEmpty
 	}
 
 	res, err := reservation.NewReservation(reservation.SeqNum(m.currentSeq), video)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	m.reservations = append(m.reservations, *res)
 
 	m.currentSeq++
-	return nil
+	return int(res.Seq()), nil
 }
 
 func (m *MemoryRepository) DeQueue() (*reservation.Reservation, error) {

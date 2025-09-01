@@ -16,7 +16,7 @@ var ErrFilePathEmpty = errors.New("empty file path")
 type State string
 
 const (
-	URLWaiting  State = "url_waiting"
+	// URLWaiting  State = "url_waiting"
 	Downloading State = "downloading"
 	Ready       State = "ready"
 )
@@ -33,6 +33,10 @@ func (v *Video) Location() string { return v.location }
 func (v *Video) Url() string      { return v.url }
 func (v *Video) State() State     { return v.state }
 
+func (v *Video) SetLocation(location string) { v.location = location }
+
+func (v *Video) SetState(state State) { v.state = state }
+
 func NewNetworkVideo(song *song.Song, location string, url string) (*Video, error) {
 	if song == nil {
 		return nil, ErrSongEmpty
@@ -46,10 +50,10 @@ func NewNetworkVideo(song *song.Song, location string, url string) (*Video, erro
 		}
 	}
 
-	// urlが空でない場合はURLWaiting、それ以外はReadyからスタート
-	state := URLWaiting
+	// urlが空でない場合はDownloading、それ以外はReadyからスタート
+	state := Ready
 	if url != "" {
-		state = Ready
+		state = Downloading
 	}
 
 	return &Video{song: *song, location: location, url: url, state: state}, nil

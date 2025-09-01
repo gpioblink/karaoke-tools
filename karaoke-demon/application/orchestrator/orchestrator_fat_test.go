@@ -15,7 +15,6 @@ import (
 	domainVideo "gpioblink.com/x/karaoke-demon/domain/video"
 	resInfra "gpioblink.com/x/karaoke-demon/infrastructure/reservation"
 	slotInfra "gpioblink.com/x/karaoke-demon/infrastructure/slot"
-	songInfra "gpioblink.com/x/karaoke-demon/infrastructure/song"
 	videoInfra "gpioblink.com/x/karaoke-demon/infrastructure/video"
 )
 
@@ -41,9 +40,8 @@ func setupFat(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventB
 		t.Skip("VIDEO_DIR not found; set VIDEO_DIR in .env.dev")
 	}
 
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := videoInfra.NewStorageRepository(conf.VIDEO_DIR, conf.FILLER_VIDEOS_PATH[0])
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	slotRepo, err := slotInfra.NewFatRepository(conf.IMAGE_PATH, conf.FILLER_VIDEOS_PATH[0])
 	if err != nil {
 		t.Fatalf("new fat repo: %v", err)

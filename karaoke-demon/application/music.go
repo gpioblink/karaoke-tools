@@ -42,8 +42,19 @@ func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repos
 }
 
 func (s *MusicService) ReserveSong(requestNo song.RequestNo) error {
+	// ビデオを検索
+	var video *video.Video
+	video, err := s.videoRepo.FindByRequestNo(string(requestNo))
+	if err != nil {
+		// ビデオが見つからない場合は、デフォルトのビデオを使用
+		video, err = s.videoRepo.GetRandomDummyVideo()
+		if err != nil {
+			return err
+		}
+	}
+
 	// 予約イベントを投げ、オーケストレータに処理させる
-	s.bus.Publish(context.Background(), eventbus.ReservationCreated{SongID: string(requestNo)})
+	s.bus.Publish(context.Background(), eventbus.ReservationCreated{SongID: string(requestNo), VideoTitle: video.Location()})
 	return nil
 }
 

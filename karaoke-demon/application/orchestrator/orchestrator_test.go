@@ -21,7 +21,6 @@ import (
 	domainVideo "gpioblink.com/x/karaoke-demon/domain/video"
 	resInfra "gpioblink.com/x/karaoke-demon/infrastructure/reservation"
 	slotInfra "gpioblink.com/x/karaoke-demon/infrastructure/slot"
-	songInfra "gpioblink.com/x/karaoke-demon/infrastructure/song"
 	videoInfra "gpioblink.com/x/karaoke-demon/infrastructure/video"
 )
 
@@ -168,9 +167,8 @@ func (b *blockingSlotRepo) FindById(id int) (*slot.Slot, error) { return b.inner
 func (b *blockingSlotRepo) List() ([]*slot.Slot, error)         { return b.inner.List() }
 
 func setup(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventBus, orchestrator.Dependencies) {
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := fakeVideoRepo{}
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	slotRepo := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
 
 	bus := eventbus.NewInMemoryEventBus()
@@ -187,9 +185,8 @@ func setup(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventBus,
 }
 
 func setupWithDownloadRepo(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventBus, orchestrator.Dependencies, *downloadGateVideoRepo) {
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := newDownloadGateVideoRepo()
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	slotRepo := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
 
 	bus := eventbus.NewInMemoryEventBus()
@@ -206,9 +203,8 @@ func setupWithDownloadRepo(t *testing.T) (*application.MusicService, *eventbus.I
 }
 
 func setupWithRecordingSlotRepo(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventBus, orchestrator.Dependencies, *recordingSlotRepo) {
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := fakeVideoRepo{}
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	base := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
 	rec := newRecordingSlotRepo(base)
 
@@ -226,9 +222,8 @@ func setupWithRecordingSlotRepo(t *testing.T) (*application.MusicService, *event
 }
 
 func setupWithBlockingSlotRepo(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventBus, orchestrator.Dependencies, *blockingSlotRepo) {
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := fakeVideoRepo{}
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	base := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
 	blk := newBlockingSlotRepo(base)
 
@@ -500,9 +495,8 @@ func videoPathOrNone(s *slot.Slot) string {
 }
 
 func setupWithDownloadAndWrappers(t *testing.T) (*application.MusicService, *eventbus.InMemoryEventBus, orchestrator.Dependencies, *downloadGateVideoRepo, *recordingSlotRepo, *blockingSlotRepo) {
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := newDownloadGateVideoRepo()
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	base := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
 	rec := newRecordingSlotRepo(base)
 	blk := newBlockingSlotRepo(rec)
@@ -549,7 +543,7 @@ func TestScenario_StateTransitions_WithDownloadWaiting(t *testing.T) {
 
 	// STEP3 324244 ダウンロード完了 -> attachNext で writing に遷移し、ChangeVideo入口でブロック
 	vrepo.MakeAvailable("324244")
-	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: 0, LocalPath: "324244.mp4"})
+	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationSeq: 0, LocalPath: "324244.mp4"})
 	select {
 	case <-blk.enteredChange:
 	case <-time.After(500 * time.Millisecond):
@@ -577,7 +571,7 @@ func TestScenario_StateTransitions_WithDownloadWaiting(t *testing.T) {
 	// STEP5 321445 ダウンロード完了 -> writing観測
 	drainEnteredChange(blk)
 	vrepo.MakeAvailable("321445")
-	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: 1, LocalPath: "321445.mp4"})
+	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationSeq: 1, LocalPath: "321445.mp4"})
 	blk.resumeChange = make(chan struct{})
 	select {
 	case <-blk.enteredChange:
@@ -598,7 +592,7 @@ func TestScenario_StateTransitions_WithDownloadWaiting(t *testing.T) {
 	// STEP7 999999 ダウンロード完了 -> writing観測
 	drainEnteredChange(blk)
 	vrepo.MakeAvailable("999999")
-	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: 2, LocalPath: "999999.mp4"})
+	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationSeq: 2, LocalPath: "999999.mp4"})
 	blk.resumeChange = make(chan struct{})
 	select {
 	case <-blk.enteredChange:
@@ -621,7 +615,7 @@ func TestScenario_StateTransitions_WithDownloadWaiting(t *testing.T) {
 
 func repoMarkDownloadedAndNotify(t *testing.T, vrepo *downloadGateVideoRepo, bus *eventbus.InMemoryEventBus, req string) {
 	vrepo.MakeAvailable(req)
-	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: 0, LocalPath: req + ".mp4"})
+	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationSeq: 0, LocalPath: req + ".mp4"})
 	bus.Wait()
 }
 
@@ -781,9 +775,8 @@ func containsOrder(history []slot.State, seq []slot.State) bool {
 }
 
 func TestReservationCreated_WithURL_WaitsUntilDownloaded(t *testing.T) {
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := newDownloadGateVideoRepo()
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	base := slotInfra.NewMemoryRepository("/tmp/dummy.mp4")
 
 	bus := eventbus.NewInMemoryEventBus()
@@ -802,7 +795,7 @@ func TestReservationCreated_WithURL_WaitsUntilDownloaded(t *testing.T) {
 
 	// ダウンロード完了を通知（テスト用ビデオリポジトリに可用化）
 	videoRepo.MakeAvailable("777777")
-	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: 0, LocalPath: filepath.Join("/tmp", "777777-title.mp4")})
+	bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationSeq: 0, LocalPath: filepath.Join("/tmp", "777777-title.mp4")})
 	bus.Wait()
 
 	s0, _ = deps.SlotRepo.FindById(0)
@@ -844,9 +837,8 @@ func TestDownloadIntegration_WithThrottledHTTP10MB(t *testing.T) {
 	defer ts.Close()
 
 	// 実配線（ストレージビデオリポジトリでダウンロード結果を検出）
-	songRepo := songInfra.NewMemoryRepository()
 	videoRepo := videoInfra.NewStorageRepository(tmpDir, dummyPath)
-	reservationRepo := resInfra.NewMemoryRepository(songRepo)
+	reservationRepo := resInfra.NewMemoryRepository()
 	slotRepo := slotInfra.NewMemoryRepository(dummyPath)
 
 	bus := eventbus.NewInMemoryEventBus()

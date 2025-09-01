@@ -30,6 +30,8 @@ type Reservation struct {
 
 func (r *Reservation) Seq() SeqNum { return r.seq }
 
+func (r *Reservation) Video() *video.Video { return r.video }
+
 func (r *Reservation) Song() (song.Song, error) {
 	if r.video == nil {
 		return song.Song{}, ErrReservationSongEmpty

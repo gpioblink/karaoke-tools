@@ -13,6 +13,7 @@ import (
 	"gpioblink.com/x/karaoke-demon/application/eventbus"
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
 	"gpioblink.com/x/karaoke-demon/domain/slot"
+	"gpioblink.com/x/karaoke-demon/domain/song"
 	"gpioblink.com/x/karaoke-demon/domain/video"
 )
 
@@ -43,12 +44,24 @@ func (o *Orchestrator) wire() {
 	// 予約作成時: キューへ積み、空スロットに割当。
 	o.d.Bus.Subscribe(eventbus.EventReservationCreated, func(ctx context.Context, e eventbus.Event) {
 		v := e.(eventbus.ReservationCreated)
-		if err := o.d.ReservationRepo.EnQueue(v.SongID); err != nil {
+		eSong, err := song.NewSongInfo(v.SongID)
+		if err != nil {
+			log.Printf("song creation error: %v", err)
+			return
+		}
+		evideo, err := video.NewNetworkVideo(eSong, v.VideoTitle, v.WithVideoURL)
+		if err != nil {
+			log.Printf("video creation error: %v", err)
+			return
+		}
+		eSeq, err := o.d.ReservationRepo.EnQueue(evideo)
+		if err != nil {
 			log.Printf("enqueue error: %v", err)
+			return
 		}
 		// URL付きならダウンロード完了後に割当。URLが無ければ即割当。
 		if strings.TrimSpace(v.WithVideoURL) != "" {
-			go func(url, title string) {
+			go func(url, title string, seq int) {
 				// 保存先ファイル名: 指定タイトルがあればそれを使用。無ければSongID.mp4
 				fileName := title
 				if strings.TrimSpace(fileName) == "" {
@@ -60,8 +73,8 @@ func (o *Orchestrator) wire() {
 					return
 				}
 				// ダウンロード完了を通知
-				o.d.Bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationID: -1, LocalPath: target})
-			}(v.WithVideoURL, v.VideoTitle)
+				o.d.Bus.Publish(context.Background(), eventbus.VideoDownloaded{ReservationSeq: seq, LocalPath: target})
+			}(v.WithVideoURL, v.VideoTitle, eSeq)
 			return
 		}
 		o.attachNext()
@@ -88,6 +101,19 @@ func (o *Orchestrator) wire() {
 
 	// 動画ダウンロード完了
 	o.d.Bus.Subscribe(eventbus.EventVideoDownloaded, func(ctx context.Context, e eventbus.Event) {
+		v := e.(eventbus.VideoDownloaded)
+		res, err := o.d.ReservationRepo.FindBySeq(v.ReservationSeq)
+		if err != nil {
+			log.Printf("reservation find error: %v", err)
+			return
+		}
+		vid := res.Video()
+		if vid == nil {
+			log.Printf("video not found: %v", v.ReservationSeq)
+			return
+		}
+		vid.SetLocation(v.LocalPath)
+		vid.SetState(video.Ready)
 		// 予約キュー -> スロット割り当ては attachNext に集約
 		o.attachNext()
 	})

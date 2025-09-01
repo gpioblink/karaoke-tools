@@ -55,8 +55,8 @@ func (e VideoURLReceived) Name() string { return EventVideoURLReceived }
 
 // VideoDownloaded は動画の保存完了
 type VideoDownloaded struct {
-	ReservationID int
-	LocalPath     string
+	ReservationSeq int
+	LocalPath      string
 }
 
 func (e VideoDownloaded) Name() string { return EventVideoDownloaded }
