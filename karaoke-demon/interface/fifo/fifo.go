@@ -26,6 +26,8 @@ type FifoInterface struct {
 var DefaultRouter = map[string]handler.HandlerFunc{
 	"REMOTE_SONG": handler.ReserveSong,
 	"USBMSG_READ": handler.UpdateReading,
+	"IR_COMMAND":  handler.SendIRCommand,
+	"IR_DATA":     handler.SendIRData,
 }
 
 func NewFifoInterface(service *application.MusicService, router map[string]handler.HandlerFunc, fifoPath string) (*FifoInterface, error) {

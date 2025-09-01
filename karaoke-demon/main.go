@@ -15,6 +15,7 @@ import (
 	"gpioblink.com/x/karaoke-demon/interface/ble"
 	"gpioblink.com/x/karaoke-demon/interface/fifo"
 	httpiface "gpioblink.com/x/karaoke-demon/interface/http"
+	"gpioblink.com/x/karaoke-demon/interface/ir"
 )
 
 func main() {
@@ -37,9 +38,33 @@ func main() {
 		panic(err)
 	}
 
+	// 赤外線送信機を初期化
+	log.Printf("Initializing IR transmitter on GPIO pin %d...", conf.IR_GPIO_PIN)
+	irTransmitter, err := ir.NewIRTransmitter(conf.IR_GPIO_PIN)
+	if err != nil {
+		log.Printf("Warning: failed to initialize IR transmitter: %v", err)
+		log.Println("Continuing without IR functionality...")
+		irTransmitter = nil
+	} else {
+		log.Println("IR transmitter initialized successfully")
+		defer func() {
+			if err := irTransmitter.Close(); err != nil {
+				log.Printf("Error closing IR transmitter: %v", err)
+			}
+		}()
+	}
+
 	// イベントバス/オーケストレータ配線
 	bus := eventbus.NewInMemoryEventBus()
-	musicService := application.NewMusicService(reservationRepository, slotRepository, videoRepository, bus)
+
+	// MusicServiceを作成（赤外線送信機付き）
+	var musicService *application.MusicService
+	if irTransmitter != nil {
+		musicService = application.NewMusicServiceWithIR(reservationRepository, slotRepository, videoRepository, bus, irTransmitter)
+	} else {
+		musicService = application.NewMusicService(reservationRepository, slotRepository, videoRepository, bus)
+	}
+
 	_ = orchestrator.New(orchestrator.Dependencies{
 		Bus:             bus,
 		ReservationRepo: reservationRepository,

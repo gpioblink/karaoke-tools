@@ -10,6 +10,7 @@ import (
 	"gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/domain/song"
 	"gpioblink.com/x/karaoke-demon/domain/video"
+	"gpioblink.com/x/karaoke-demon/interface/ir"
 )
 
 type MusicModel interface {
@@ -30,6 +31,7 @@ type MusicService struct {
 	slotRepo        slot.Repository
 	videoRepo       video.Repository
 	bus             eventbus.EventBus
+	irTransmitter   *ir.IRTransmitter
 }
 
 func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repository, videoRepo video.Repository, bus eventbus.EventBus) *MusicService {
@@ -38,6 +40,17 @@ func NewMusicService(reservationRepo reservation.Repository, slotRepo slot.Repos
 		slotRepo:        slotRepo,
 		videoRepo:       videoRepo,
 		bus:             bus,
+	}
+}
+
+// NewMusicServiceWithIR 赤外線送信機能付きのMusicServiceを作成
+func NewMusicServiceWithIR(reservationRepo reservation.Repository, slotRepo slot.Repository, videoRepo video.Repository, bus eventbus.EventBus, irTransmitter *ir.IRTransmitter) *MusicService {
+	return &MusicService{
+		reservationRepo: reservationRepo,
+		slotRepo:        slotRepo,
+		videoRepo:       videoRepo,
+		bus:             bus,
+		irTransmitter:   irTransmitter,
 	}
 }
 
@@ -168,6 +181,45 @@ func (s *MusicService) GetReservationWithSlotInfo() ([]*reservation.Reservation,
 	}
 
 	return reservations, slots, nil
+}
+
+func (s *MusicService) SendIRCommand(command uint8) error {
+	if s.irTransmitter == nil {
+		return fmt.Errorf("IR transmitter not initialized")
+	}
+	return s.irTransmitter.SendCommand(command)
+}
+
+// SendIRData 赤外線データを送信
+func (s *MusicService) SendIRData(address, command uint8) error {
+	if s.irTransmitter == nil {
+		return fmt.Errorf("IR transmitter not initialized")
+	}
+	return s.irTransmitter.SendData(address, command)
+}
+
+// SendIRCommandString 文字列として渡された赤外線コマンドを送信
+func (s *MusicService) SendIRCommandString(commandStr string) error {
+	if s.irTransmitter == nil {
+		return fmt.Errorf("IR transmitter not initialized")
+	}
+	return s.irTransmitter.SendCommandString(commandStr)
+}
+
+// SendIRDataString 文字列として渡された赤外線データを送信
+func (s *MusicService) SendIRDataString(addressStr, commandStr string) error {
+	if s.irTransmitter == nil {
+		return fmt.Errorf("IR transmitter not initialized")
+	}
+	return s.irTransmitter.SendDataString(addressStr, commandStr)
+}
+
+// CloseIR 赤外線送信機のリソースを解放
+func (s *MusicService) CloseIR() error {
+	if s.irTransmitter != nil {
+		return s.irTransmitter.Close()
+	}
+	return nil
 }
 
 func calcPositiveModulo(a, b int) int {

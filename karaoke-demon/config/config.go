@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -12,6 +13,7 @@ type Config struct {
 	FIFO_PATH          string
 	VIDEO_DIR          string
 	FILLER_VIDEOS_PATH []string
+	IR_GPIO_PIN        int
 }
 
 func NewConfig() (*Config, error) {
@@ -36,8 +38,16 @@ func NewConfig() (*Config, error) {
 			FIFO_PATH:          "/tmp/karaoke-fifo",
 			VIDEO_DIR:          "/home/output",
 			FILLER_VIDEOS_PATH: []string{"/home/output/dummy.mp4"},
+			IR_GPIO_PIN:        18, // デフォルトGPIOピン
 		}, nil
 		// return nil, fmt.Errorf("error loading %s file", envFile)
+	}
+
+	irGpioPin := 18 // デフォルト値
+	if irPinStr := os.Getenv("IR_GPIO_PIN"); irPinStr != "" {
+		if pin, err := strconv.Atoi(irPinStr); err == nil {
+			irGpioPin = pin
+		}
 	}
 
 	return &Config{
@@ -45,5 +55,6 @@ func NewConfig() (*Config, error) {
 		FIFO_PATH:          os.Getenv("FIFO_PATH"),
 		VIDEO_DIR:          os.Getenv("VIDEO_DIR"),
 		FILLER_VIDEOS_PATH: []string{os.Getenv("DUMMY_VIDEO_PATH")},
+		IR_GPIO_PIN:        irGpioPin,
 	}, nil
 }
