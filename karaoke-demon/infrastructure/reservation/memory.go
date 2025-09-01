@@ -1,36 +1,36 @@
 package reservation
 
 import (
+	"errors"
+
 	"gpioblink.com/x/karaoke-demon/domain/reservation"
-	"gpioblink.com/x/karaoke-demon/domain/song"
+	"gpioblink.com/x/karaoke-demon/domain/video"
 )
 
+var ErrVideoEmpty = errors.New("video is empty")
+
 type MemoryRepository struct {
-	reservations   []reservation.Reservation
-	songRepository song.Repository
-	currentSeq     int
+	reservations []reservation.Reservation
+	currentSeq   int
 }
 
-func NewMemoryRepository(songRepository song.Repository) *MemoryRepository {
+func NewMemoryRepository() *MemoryRepository {
 	return &MemoryRepository{
-		reservations:   []reservation.Reservation{},
-		songRepository: songRepository,
-		currentSeq:     0,
+		reservations: []reservation.Reservation{},
+		currentSeq:   0,
 	}
 }
 
-func (m *MemoryRepository) EnQueue(requestNo string) error {
-	songInfo, err := m.songRepository.FindByRequestNo(requestNo)
-	if err != nil {
-		return err
+func (m *MemoryRepository) EnQueue(video *video.Video) error {
+	if video == nil {
+		return ErrVideoEmpty
 	}
-	res, err := reservation.NewReservation(reservation.SeqNum(m.currentSeq), songInfo)
+
+	res, err := reservation.NewReservation(reservation.SeqNum(m.currentSeq), video)
 	if err != nil {
 		return err
 	}
 	m.reservations = append(m.reservations, *res)
-
-	// デモ用の自動削除は無効化（テスト安定化のため）
 
 	m.currentSeq++
 	return nil

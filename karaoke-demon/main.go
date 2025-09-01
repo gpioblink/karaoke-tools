@@ -10,7 +10,6 @@ import (
 	"gpioblink.com/x/karaoke-demon/config"
 	"gpioblink.com/x/karaoke-demon/infrastructure/reservation"
 	"gpioblink.com/x/karaoke-demon/infrastructure/slot"
-	"gpioblink.com/x/karaoke-demon/infrastructure/song"
 	"gpioblink.com/x/karaoke-demon/infrastructure/video"
 	"gpioblink.com/x/karaoke-demon/interface/ble"
 	"gpioblink.com/x/karaoke-demon/interface/fifo"
@@ -27,9 +26,9 @@ func main() {
 	log.Println("Starting Karaoke Demon...")
 	defer log.Println("Karaoke Demon stopped.")
 
-	songRepository := song.NewMemoryRepository()
+	//songRepository := song.NewMemoryRepository()
 	videoRepository := video.NewStorageRepository(conf.VIDEO_DIR, conf.FILLER_VIDEOS_PATH[0])
-	reservationRepository := reservation.NewMemoryRepository(songRepository)
+	reservationRepository := reservation.NewMemoryRepository()
 	//slotRepository := slot.NewMemoryRepository()
 	slotRepository, err := slot.NewFatRepository(conf.IMAGE_PATH, conf.FILLER_VIDEOS_PATH[0])
 	if err != nil {

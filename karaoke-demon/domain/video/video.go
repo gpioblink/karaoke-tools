@@ -33,7 +33,7 @@ func (v *Video) Location() string { return v.location }
 func (v *Video) Url() string      { return v.url }
 func (v *Video) State() State     { return v.state }
 
-func NewVideo(song *song.Song, location string, url string) (*Video, error) {
+func NewNetworkVideo(song *song.Song, location string, url string) (*Video, error) {
 	if song == nil {
 		return nil, ErrSongEmpty
 	}
@@ -53,4 +53,8 @@ func NewVideo(song *song.Song, location string, url string) (*Video, error) {
 	}
 
 	return &Video{song: *song, location: location, url: url, state: state}, nil
+}
+
+func NewVideo(song *song.Song, location string) (*Video, error) {
+	return NewNetworkVideo(song, location, "")
 }
