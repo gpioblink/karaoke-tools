@@ -16,9 +16,9 @@ import (
 	httpiface "gpioblink.com/x/karaoke-demon/interface/http"
 )
 
-// ビルド時に設定される変数
+// pre-commitフックで設定される変数
 var (
-	Commit = "unknown"
+	Commit = "eea9209"
 )
 
 func main() {
