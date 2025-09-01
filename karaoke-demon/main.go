@@ -18,9 +18,9 @@ import (
 
 // pre-commitフックで設定される変数
 var (
-	Version   = "unknown"
-	BuildDate = "unknown"
-	BuildUser = "unknown"
+	Version   = "v0.5.1-1-gdb4f438-dirty"
+	BuildDate = "2025-09-01T17:52:54+09:00"
+	BuildUser = "gpioblink"
 )
 
 func main() {
