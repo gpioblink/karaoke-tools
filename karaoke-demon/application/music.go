@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -108,39 +109,48 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 	// TODO: なんでこの辺のログファイルを残したのか聞く
 	fmt.Printf("Handle: slotId: %d\n", id)
+	totalSlots := s.slotRepo.Len()
+	if totalSlots == 0 {
+		return fmt.Errorf("Handle: slot repository is empty")
+	}
+
 	currentSlot, err := s.slotRepo.GetFirstSlotByState(slot.Reading)
+	if err != nil && !errors.Is(err, slot.ErrNotFound) {
+		return err
+	}
+
+	targetID := id
 	if currentSlot != nil {
 		fmt.Printf("Handle: currentId: %d\n", currentSlot.Id())
-		if currentSlot.Id() == id {
+		if currentSlot.Id() == targetID {
 			// 前回の読み込み時点から変わっていなければ何もしない
 			fmt.Println("Handle: No Change")
 			return nil
-		} else if currentSlot.Id() != calcPositiveModulo(id-1, s.slotRepo.Len()) {
-			// 前回から連続するIDでない場合は、おかしいので何もしない
-			fmt.Println("Handle: invalid Order")
-			return nil
 		}
-	}
-	if err != nil {
+
+		expectedPrev := calcPositiveModulo(targetID-1, totalSlots)
+		if currentSlot.Id() != expectedPrev {
+			// 3スロット前提での読み取り順に合わせるため、次スロットへ補正
+			expectedNext := calcPositiveModulo(currentSlot.Id()+1, totalSlots)
+			fmt.Printf("Handle: unexpected Order (current=%d, expectedPrev=%d). adjust to %d\n", currentSlot.Id(), expectedPrev, expectedNext)
+			targetID = expectedNext
+		}
+	} else if targetID != 0 {
 		// まだ一度もreadが来ていない場合、0から始まる場合のみ受け付ける
-		if id != 0 {
-			fmt.Println("Handle: no read yet. invalid Order")
-			return nil
-		}
+		fmt.Println("Handle: no read yet. invalid Order")
+		return nil
 	}
 
 	// Remove the reservation that is previous reading
 	// キューからは曲の再生が終わった時点で削除する。そのため1曲も予約してない状態では消えないようにする
-	_, err = s.reservationRepo.FindByQueueIndex(0)
-	if err == nil && currentSlot != nil {
-		_, err = s.reservationRepo.DeQueue()
-		if err != nil {
+	if _, err := s.reservationRepo.FindByQueueIndex(0); err == nil && currentSlot != nil {
+		if _, err := s.reservationRepo.DeQueue(); err != nil {
 			log.Printf("failed to dequeue reservation: %v", err)
 		}
 	}
 
 	// 前スロットを開放済みに、現在を読み取りに、次をロックに。完了後に次の割当を促す
-	s.bus.Publish(context.Background(), eventbus.SlotReadingAdvanced{ReadingSlotID: id, TotalSlots: s.slotRepo.Len()})
+	s.bus.Publish(context.Background(), eventbus.SlotReadingAdvanced{ReadingSlotID: targetID, TotalSlots: totalSlots})
 
 	return nil
 }
