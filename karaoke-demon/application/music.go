@@ -107,8 +107,7 @@ func (s *MusicService) ListReservations() ([]*reservation.Reservation, error) {
 }
 
 func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
-	// TODO: なんでこの辺のログファイルを残したのか聞く
-	fmt.Printf("Handle: slotId: %d\n", id)
+	log.Printf("Handle: slotId: %d", id)
 	totalSlots := s.slotRepo.Len()
 	if totalSlots == 0 {
 		return fmt.Errorf("Handle: slot repository is empty")
@@ -121,10 +120,10 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 
 	targetID := id
 	if currentSlot != nil {
-		fmt.Printf("Handle: currentId: %d\n", currentSlot.Id())
+		log.Printf("Handle: currentId: %d", currentSlot.Id())
 		if currentSlot.Id() == targetID {
 			// 前回の読み込み時点から変わっていなければ何もしない
-			fmt.Println("Handle: No Change")
+			log.Printf("Handle: No Change")
 			return nil
 		}
 
@@ -132,12 +131,12 @@ func (s *MusicService) UpdateSlotStateReadingByReadingSlotId(id int) error {
 		if currentSlot.Id() != expectedPrev {
 			// 3スロット前提での読み取り順に合わせるため、次スロットへ補正
 			expectedNext := calcPositiveModulo(currentSlot.Id()+1, totalSlots)
-			fmt.Printf("Handle: unexpected Order (current=%d, expectedPrev=%d). adjust to %d\n", currentSlot.Id(), expectedPrev, expectedNext)
+			log.Printf("Handle: unexpected Order (current=%d, expectedPrev=%d). adjust to %d", currentSlot.Id(), expectedPrev, expectedNext)
 			targetID = expectedNext
 		}
 	} else if targetID != 0 {
 		// まだ一度もreadが来ていない場合、0から始まる場合のみ受け付ける
-		fmt.Println("Handle: no read yet. invalid Order")
+		log.Printf("Handle: no read yet. invalid Order")
 		return nil
 	}
 

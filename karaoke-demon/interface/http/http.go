@@ -5,9 +5,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"gpioblink.com/x/karaoke-demon/application"
 	"gpioblink.com/x/karaoke-demon/domain/song"
+	"gpioblink.com/x/karaoke-demon/infrastructure/logging"
 )
 
 type HttpInterface struct {
@@ -98,6 +101,7 @@ func NewHttpInterface(service *application.MusicService, version, buildDate, bui
 	mux.HandleFunc("/reservation", httpInterface.handleReservation)
 	mux.HandleFunc("/local-files", httpInterface.handleLocalFiles)
 	mux.HandleFunc("/version", httpInterface.handleVersion)
+	mux.HandleFunc("/log", httpInterface.handleLogs)
 
 	return httpInterface
 }
@@ -320,6 +324,46 @@ func (h *HttpInterface) handleVersion(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *HttpInterface) handleLogs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	limit := 0
+	if rawLimit := r.URL.Query().Get("limit"); rawLimit != "" {
+		value, err := strconv.Atoi(rawLimit)
+		if err != nil || value < 0 {
+			http.Error(w, "limit must be a positive integer", http.StatusBadRequest)
+			return
+		}
+		limit = value
+	}
+
+	entries := logging.Snapshot(limit)
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	if len(entries) == 0 {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	var builder strings.Builder
+	for i, entry := range entries {
+		if i > 0 {
+			builder.WriteByte('\n')
+		}
+		builder.WriteString(entry.Timestamp.Format(time.RFC3339Nano))
+		builder.WriteByte(' ')
+		builder.WriteString(entry.Message)
+	}
+
+	if _, err := w.Write([]byte(builder.String())); err != nil {
+		log.Printf("failed to write log response: %v", err)
+	}
 }
 
 func (h *HttpInterface) Run() error {

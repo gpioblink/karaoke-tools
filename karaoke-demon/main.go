@@ -8,6 +8,7 @@ import (
 	"gpioblink.com/x/karaoke-demon/application/eventbus"
 	"gpioblink.com/x/karaoke-demon/application/orchestrator"
 	"gpioblink.com/x/karaoke-demon/config"
+	"gpioblink.com/x/karaoke-demon/infrastructure/logging"
 	"gpioblink.com/x/karaoke-demon/infrastructure/reservation"
 	"gpioblink.com/x/karaoke-demon/infrastructure/slot"
 	"gpioblink.com/x/karaoke-demon/infrastructure/video"
@@ -18,8 +19,8 @@ import (
 
 // pre-commitフックで設定される変数
 var (
-	Version   = "v0.5.1-2-gc107ee3-dirty"
-	BuildDate = "2025-10-15T09:46:39+09:00"
+	Version   = "v0.5.1-3-g1f2c06a-dirty"
+	BuildDate = "2025-10-15T10:06:09+09:00"
 	BuildUser = "gpioblink"
 )
 
@@ -29,6 +30,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	logging.Setup()
 
 	log.Println("Starting Karaoke Demon...")
 	defer log.Println("Karaoke Demon stopped.")
