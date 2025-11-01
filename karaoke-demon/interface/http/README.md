@@ -29,6 +29,21 @@
   status: "ok"
 }
 
+## POST /usbmsg-read
+
+USBMSG_READ コマンド相当。現在読み込み中の次のスロットが読み込み完了したものとして処理されます。
+
+### request
+
+なし（ボディ不要）
+
+### response
+
+{
+  slot: 0,
+  status: "ok"
+}
+
 ## GET /reservation
 
 現在の予約状況とそれに付随するスロット情報を取得

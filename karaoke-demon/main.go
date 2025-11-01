@@ -19,8 +19,8 @@ import (
 
 // pre-commitフックで設定される変数
 var (
-	Version   = "v0.5.1-3-g1f2c06a-dirty"
-	BuildDate = "2025-10-15T10:06:09+09:00"
+	Version   = "v0.5.1-4-g79c016f-dirty"
+	BuildDate = "2025-11-01T10:40:21+09:00"
 	BuildUser = "gpioblink"
 )
 

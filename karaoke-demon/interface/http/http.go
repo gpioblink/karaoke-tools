@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gpioblink.com/x/karaoke-demon/application"
+	slotDomain "gpioblink.com/x/karaoke-demon/domain/slot"
 	"gpioblink.com/x/karaoke-demon/domain/song"
 	"gpioblink.com/x/karaoke-demon/infrastructure/logging"
 )
@@ -75,6 +76,11 @@ type FileInfo struct {
 	Name string `json:"name"`
 }
 
+type USBMsgReadResponse struct {
+	Slot   int    `json:"slot"`
+	Status string `json:"status"`
+}
+
 // バージョン情報レスポンス用の構造体
 type VersionResponse struct {
 	Version   string `json:"version"`
@@ -102,6 +108,7 @@ func NewHttpInterface(service *application.MusicService, version, buildDate, bui
 	mux.HandleFunc("/local-files", httpInterface.handleLocalFiles)
 	mux.HandleFunc("/version", httpInterface.handleVersion)
 	mux.HandleFunc("/log", httpInterface.handleLogs)
+	mux.HandleFunc("/usbmsg-read", httpInterface.handleUSBMsgRead)
 
 	return httpInterface
 }
@@ -363,6 +370,49 @@ func (h *HttpInterface) handleLogs(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := w.Write([]byte(builder.String())); err != nil {
 		log.Printf("failed to write log response: %v", err)
+	}
+}
+
+func (h *HttpInterface) handleUSBMsgRead(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	slots, err := h.musicService.ListSlots()
+	if err != nil {
+		log.Printf("failed to list slots: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if len(slots) == 0 {
+		http.Error(w, "Slots are not initialized", http.StatusInternalServerError)
+		return
+	}
+
+	targetID := 0
+	for _, slot := range slots {
+		if slot.State() == slotDomain.Reading {
+			targetID = (slot.Id() + 1) % len(slots)
+			break
+		}
+	}
+
+	if err := h.musicService.UpdateSlotStateReadingByReadingSlotId(targetID); err != nil {
+		log.Printf("failed to update reading slot: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	response := USBMsgReadResponse{
+		Slot:   targetID,
+		Status: "ok",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("failed to encode usbmsg-read response: %v", err)
 	}
 }
 
