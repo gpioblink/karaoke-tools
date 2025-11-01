@@ -1,10 +1,8 @@
 module github.com/gpioblink/karaoke-tools/debug-tools/parse-usbread
 
-go 1.23.0
+go 1.22.2
 
-toolchain go1.24.9
-
-require github.com/gdamore/tcell/v2 v2.9.0
+require github.com/gdamore/tcell/v2 v2.8.0
 
 require (
 	github.com/gdamore/encoding v1.0.1 // indirect
